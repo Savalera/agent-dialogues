@@ -1,0 +1,9 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "baby": "./src/agents/baby.py:graph",
+    "daddy": "./src/agents/daddy.py:graph",
+    "simulation": "./src/agents/simulation.py:graph"
+  },
+  "env": ".env"
+}
