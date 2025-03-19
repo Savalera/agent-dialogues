@@ -5,7 +5,7 @@ from typing import List, Literal, TypedDict
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.graph import END, START, StateGraph
 
-from src.agents import baby, daddy
+from agents import baby, daddy
 
 MAX_MESSAGES = 10
 
