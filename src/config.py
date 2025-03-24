@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 
 
-def load_simulation(simulation_id: str, config_dir: str = "src/sims") -> dict:
+def load_simulation(simulation_id: str, config_dir: str = "sims") -> dict:
     """Load simulation config."""
     config_path = Path(config_dir) / f"{simulation_id}.yaml"
     if not config_path.exists():

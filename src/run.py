@@ -1,5 +1,6 @@
 """Command Line runner."""
 
+import argparse
 import datetime
 import json
 
@@ -9,7 +10,18 @@ from langchain_ollama import ChatOllama
 from agents import simulation_agent as app
 from config import load_simulation
 
-sim = load_simulation("baby-daddy")
+parser = argparse.ArgumentParser(description="Run a 2-agent dialogue simulation.")
+parser.add_argument(
+    "--sim",
+    type=str,
+    required=True,
+    help="Name of the simulation to load from the `sims` directory (e.g. 'baby-daddy')",
+)
+args = parser.parse_args()
+
+sim_name = args.sim
+
+sim = load_simulation(sim_name)
 
 initiator = sim["initiator"]
 responder = sim["responder"]

@@ -14,14 +14,15 @@ We use it for simulated conversations to check language model and agent behavior
 
 Current features:
 
-- Runs a conversation of two participants; `initiator`, `responder`.
+- Runs a conversation of two participants; `initiator`, and `responder`.
 - Configurable system prompt per participant.
 - Configurable language model per participant.
 - Configurable conversation length.
 
 Known limitations:
 
-- Local Ollama connectivity is hard coded.
+- This is an MVP, there is a lot to be added and generalized.
+- Local Ollama connectivity is hard-coded.
 
 Planned features:
 
@@ -36,8 +37,12 @@ Simulations are defined under the `sims` directory, check `sims/baby-daddy.yaml`
 
 1. Clone this repo.
 2. Install dependencies.
-3. Add your simulation configuration under `sims`.
-4. Run with `run.py`.
+3. Add your simulation configuration under the `sims` directory.
+4. Run with `src/run.py` with the `sim` argument, for example:
+
+```sh
+uv run src/run.py --sim baby-daddy
+```
 
 ## Output
 

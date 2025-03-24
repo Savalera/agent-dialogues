@@ -1,6 +1,7 @@
 -e file:///Users/mark/dev/agentic-lab/simulations/agent-dialogues
 annotated-types==0.7.0
 anyio==4.8.0
+argparse==1.4.0
 -e file:///Users/mark/dev/agentic-lab/simulations/agent-dialogues
 certifi==2025.1.31
 charset-normalizer==3.4.1
