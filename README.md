@@ -32,7 +32,7 @@ We use it for simulated conversations to check language model and agent behavior
 - Classification of conversation messages for personality traits.
 - Self assessment and adoption mid-conversation.
 
-## Simulation set-up
+## Simulation setup
 
 Simulations are defined under the `sims` directory, check `sims/baby-daddy.yaml` for an example.
 
