@@ -1,29 +1,45 @@
 """Simulation Agent."""
 
-from typing import Any, Dict, List, TypedDict
+from typing import List
 
 from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.runnables import Runnable
 from langgraph.graph import END, START, StateGraph
-from langgraph.graph.message import Messages
+from langgraph.graph.message import AnyMessage
+from pydantic import BaseModel, ConfigDict
 
 from agents import dialogue_agent
-from constants import Roles
+from domain import Roles
 
 
-class ConversationItem(TypedDict):
+class ConversationItem(BaseModel):
     """Conversation item."""
 
     role: Roles
-    message: AIMessage | HumanMessage
+    message: AnyMessage
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-class SimulationState(TypedDict):
+Conversation = List[ConversationItem]
+
+
+class DialogueAgentConfig(BaseModel):
+    """Dialoge agent configuration."""
+
+    llm: Runnable
+    system_prompt: str
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+class SimulationState(BaseModel):
     """Simulation state."""
 
-    conversation: List[ConversationItem]
+    conversation: Conversation
     MAX_MESSAGES: int
-    initiator: Dict[str, Any]
-    responder: Dict[str, Any]
+    initiator: DialogueAgentConfig
+    responder: DialogueAgentConfig
 
 
 def prepare_messages(
@@ -33,8 +49,8 @@ def prepare_messages(
     results = []
 
     for conversation_item in conversation:
-        role = conversation_item["role"]
-        message = conversation_item["message"]
+        role = conversation_item.role
+        message = conversation_item.message
 
         if role == human_role:
             results.append(HumanMessage(message.content))
@@ -45,7 +61,7 @@ def prepare_messages(
 
 
 def call_dialogue_agent(
-    conversation: List[ConversationItem], role: Roles, llm: Any, system_prompt: str
+    conversation: Conversation, role: Roles, llm: Runnable, system_prompt: str
 ):
     """Call dialogue agent."""
     human_role = Roles.RESPONDER if role == Roles.INITIATOR else Roles.INITIATOR
@@ -64,44 +80,38 @@ def call_dialogue_agent(
 
 def initiator_caller_node(state: SimulationState):
     """Call initiator agent."""
-    initiator = state[Roles.INITIATOR.value]
-    conversation = state["conversation"]
-
     response = call_dialogue_agent(
-        conversation=conversation,
+        conversation=state.conversation,
         role=Roles.INITIATOR,
-        llm=initiator["llm"],
-        system_prompt=initiator["system_prompt"],
+        llm=state.initiator.llm,
+        system_prompt=state.initiator.system_prompt,
     )
 
     return {
-        "conversation": state["conversation"]
+        "conversation": state.conversation
         + [{"role": Roles.INITIATOR, "message": response["messages"][-1]}]
     }
 
 
 def responder_caller_node(state: SimulationState):
     """Call responder agent."""
-    responder = state[Roles.RESPONDER.value]
-    conversation = state["conversation"]
-
     response = call_dialogue_agent(
-        conversation=conversation,
+        conversation=state.conversation,
         role=Roles.RESPONDER,
-        llm=responder["llm"],
-        system_prompt=responder["system_prompt"],
+        llm=state.responder.llm,
+        system_prompt=state.responder.system_prompt,
     )
 
     return {
-        "conversation": state["conversation"]
+        "conversation": state.conversation
         + [{"role": Roles.RESPONDER, "message": response["messages"][-1]}]
     }
 
 
 def should_continue(state):
     """Conversation router."""
-    conversation = state["conversation"]
-    if len(conversation) >= state["MAX_MESSAGES"]:
+    conversation = state.conversation
+    if len(conversation) >= state.MAX_MESSAGES:
         return "end"
     else:
         return "continue"

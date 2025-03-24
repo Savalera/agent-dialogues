@@ -13,6 +13,7 @@ dependencies = [
     "langchain-ollama>=0.2.3",
     "langgraph>=0.2.6",
     "python-dotenv>=1.0.1",
+    "rich>=13.9.4",
 ]
 
 

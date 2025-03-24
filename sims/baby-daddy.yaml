@@ -3,7 +3,7 @@ description: "A simple simulation between a baby and their daddy."
 
 initiator:
   name: "Baby"
-  role: "Curious Infant"
+  persona: "Curious Infant"
   model_name: "mistral-nemo"
   initial_message: |
     Daddy, please tell me about rainbows.
@@ -19,7 +19,7 @@ initiator:
 
 responder:
   name: "Daddy"
-  role: "Caring Parent"
+  persona: "Caring Parent"
   model_name: "mistral-nemo"
   system_prompt: |
     You are a wise and experienced father 

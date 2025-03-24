@@ -1,88 +1,47 @@
 """Command Line runner."""
 
-import argparse
-import datetime
-import json
+from typing import Generator
 
 from langchain_core.messages import HumanMessage
 from langchain_ollama import ChatOllama
 
 from agents import simulation_agent as app
-from config import load_simulation
-from constants import Roles
-
-parser = argparse.ArgumentParser(description="Run a 2-agent dialogue simulation.")
-parser.add_argument(
-    "--sim",
-    type=str,
-    required=True,
-    help="Name of the simulation to load from the `sims` directory (e.g. 'baby-daddy')",
+from agents.simulation_agent import (
+    ConversationItem,
+    DialogueAgentConfig,
+    SimulationState,
 )
-args = parser.parse_args()
+from domain import Roles, Simulation
 
-sim_name = args.sim
 
-sim = load_simulation(sim_name)
-
-initiator = sim[Roles.INITIATOR]
-responder = sim[Roles.RESPONDER]
-
-initial_message = initiator["initial_message"]
-
-final_state = None
-
-for chunk in app.stream(
-    {
-        "conversation": [
-            {
-                "role": Roles.INITIATOR,
-                "message": HumanMessage(content=initial_message),
-            }
-        ],
-        "MAX_MESSAGES": sim["config"]["rounds"] * 2,
-        Roles.INITIATOR: {
-            "llm": ChatOllama(model=initiator["model_name"]),
-            **initiator,
-        },
-        Roles.RESPONDER: {
-            "llm": ChatOllama(model=responder["model_name"]),
-            **responder,
-        },
-    },
-    stream_mode="values",
-):
-
-    role = (
-        f"""{initiator["name"]} ({Roles.INITIATOR.capitalize()})"""
-        if chunk["conversation"][-1]["role"] == Roles.INITIATOR
-        else f"""{responder["name"]} ({Roles.RESPONDER.capitalize()})"""
+def stream_simulation(sim: Simulation) -> Generator[SimulationState, None, None]:
+    """Yield each step of streamed simulation."""
+    initiator = DialogueAgentConfig(
+        llm=ChatOllama(model=sim.initiator.model_name),
+        system_prompt=sim.initiator.system_prompt,
     )
 
-    message = chunk["conversation"][-1]["message"]
-    message.type = role
-    message.pretty_print()
+    responder = DialogueAgentConfig(
+        llm=ChatOllama(model=sim.responder.model_name),
+        system_prompt=sim.responder.system_prompt,
+    )
 
-    final_state = chunk
+    conversation = [
+        ConversationItem(
+            role=Roles.INITIATOR,
+            message=HumanMessage(content=sim.initiator.initial_message),
+        )
+    ]
 
-if final_state:
-    chat_id = datetime.datetime.now().isoformat()
-    chat_log = {
-        "chat_id": chat_id,
-        Roles.INITIATOR: sim[Roles.INITIATOR],
-        Roles.RESPONDER: sim[Roles.RESPONDER],
-        "conversation": [
-            {
-                "role": item["role"],
-                "name": (
-                    initiator["name"]
-                    if item["role"] == Roles.INITIATOR
-                    else responder["name"]
-                ),
-                "message": item["message"].content,
-            }
-            for item in final_state["conversation"]
-        ],
-    }
+    initial_state = SimulationState(
+        conversation=conversation,
+        MAX_MESSAGES=sim.config.rounds * 2,
+        initiator=initiator,
+        responder=responder,
+    )
 
-    with open(f"logs/chat_log_{chat_id}.json", "w", encoding="utf-8") as f:
-        json.dump(chat_log, f, indent=4)
+    for chunk in app.stream(
+        initial_state,
+        stream_mode="values",
+    ):
+        yield SimulationState(**chunk)

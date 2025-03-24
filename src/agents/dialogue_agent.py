@@ -1,29 +1,34 @@
 """Dialogue agent."""
 
-from typing import Any
+from typing import List
 
 from langchain_core.messages import (
+    AnyMessage,
     SystemMessage,
 )
-from langgraph.graph import END, START, MessagesState, StateGraph
+from langchain_core.runnables import Runnable
+from langgraph.graph import END, START, StateGraph
+from pydantic import BaseModel, ConfigDict
 
 
-class State(MessagesState):
+class State(BaseModel):
     """Agent state."""
 
-    llm: Any
-    role: str
+    messages: List[AnyMessage]
+    llm: Runnable
     system_prompt: str
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 def chat_node(state: State):
     """Dialogue chat node."""
-    llm = state["llm"]
-    system = SystemMessage(state["system_prompt"])
+    llm = state.llm
+    system = SystemMessage(state.system_prompt)
 
-    response = llm.invoke([system] + state["messages"])
+    response = llm.invoke([system] + state.messages)
 
-    return {"messages": response}
+    return {"messages": state.messages + [response]}
 
 
 workflow = StateGraph(State)
