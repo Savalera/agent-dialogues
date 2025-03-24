@@ -1,7 +1,6 @@
 """Simulation Agents."""
 
-from .baby import graph as baby
-from .daddy import graph as daddy
-from .simulation import graph as simulation
+from .dialogue_agent import graph as dialogue_agent
+from .simulation_agent import graph as simulation_agent
 
-__all__ = ["baby", "daddy", "simulation"]
+__all__ = ["dialogue_agent", "simulation_agent"]

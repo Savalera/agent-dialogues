@@ -1,5 +1,5 @@
 [project]
-name = "baby-daddy-interactions"
+name = "agent-dialogues"
 version = "0.0.1"
 description = "Behavior evaluation through agent based simulations."
 authors = [
