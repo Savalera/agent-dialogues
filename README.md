@@ -12,7 +12,7 @@ We use it for simulated conversations to check language model and agent behavior
 
 ## Features
 
-Current features:
+### Current features:
 
 - Runs a conversation of two participants; `initiator`, and `responder`.
 - Simulation definition in `yaml` file.
@@ -22,12 +22,12 @@ Current features:
 - Command line interface.
 - Conversation data collection via log file (`json`).
 
-Known limitations:
+### Known limitations:
 
 - This is an MVP, there is a lot to be added and generalized.
 - Local Ollama connectivity is hard-coded.
 
-Planned features:
+### Planned features:
 
 - Classification of conversation messages for personality traits.
 - Self assessment and adoption mid-conversation.
