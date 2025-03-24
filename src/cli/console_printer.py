@@ -8,6 +8,19 @@ from rich.text import Text
 
 from domain import Roles
 
+ascii_title = r"""
+
+ $$$$$$\   $$$$$$\  $$\    $$\  $$$$$$\  $$\       $$$$$$$$\ $$$$$$$\   $$$$$$\  
+$$  __$$\ $$  __$$\ $$ |   $$ |$$  __$$\ $$ |      $$  _____|$$  __$$\ $$  __$$\ 
+$$ /  \__|$$ /  $$ |$$ |   $$ |$$ /  $$ |$$ |      $$ |      $$ |  $$ |$$ /  $$ |
+\$$$$$$\  $$$$$$$$ |\$$\  $$  |$$$$$$$$ |$$ |      $$$$$\    $$$$$$$  |$$$$$$$$ |
+ \____$$\ $$  __$$ | \$$\$$  / $$  __$$ |$$ |      $$  __|   $$  __$$< $$  __$$ |
+$$\   $$ |$$ |  $$ |  \$$$  /  $$ |  $$ |$$ |      $$ |      $$ |  $$ |$$ |  $$ |
+\$$$$$$  |$$ |  $$ |   \$  /   $$ |  $$ |$$$$$$$$\ $$$$$$$$\ $$ |  $$ |$$ |  $$ |
+ \______/ \__|  \__|    \_/    \__|  \__|\________|\________|\__|  \__|\__|  \__|
+
+"""
+
 role_style = {
     Roles.INITIATOR: "bold magenta",
     Roles.RESPONDER: "bold cyan",
@@ -17,9 +30,10 @@ role_style = {
 class SimulationPrinter:
     """Simulation printer."""
 
-    def __init__(self, total_steps: int):
+    def __init__(self, total_steps: int, sim_name: str):
         """Create simulation printer."""
         self.total = total_steps
+        self.sim_name = sim_name
         self.console = Console()
         self.progress = Progress(
             TextColumn("[progress.description]{task.description}"),
@@ -32,18 +46,32 @@ class SimulationPrinter:
             "Simulating dialogue...", total=total_steps
         )
         self.rendered = []
-        self.live = Live(console=self.console, refresh_per_second=1)
+        self.live = Live(console=self.console, refresh_per_second=1, transient=True)
 
     def start(self):
         """Start console UI."""
         self.progress.start()
         self.live.start()
 
+        panel = Panel(
+            Text.from_markup(
+                f"[#faf7d1]{ascii_title}[/#faf7d1]"
+                + f"\n[#d1ecfa]Agentic Lab[/#d1ecfa]\n\nAgent Dialogue Simulation\n\n[bold cyan]Running simulation [#cb9cfa]`{self.sim_name}`[/#cb9cfa] with [#faea9c]{self.total}[/#faea9c] steps.",
+                justify="center",
+            ),
+            border_style="blue",
+            expand=True,
+            padding=(1, 4),
+        )
+
+        self.rendered.append(panel)
+        self.live.update(Group(*self.rendered, self.progress), refresh=True)
+
     def update(self, role, participant_name, message):
         """Update console UI."""
         panel = Panel.fit(
             Text(message.strip(), style="white"),
-            title=f"[{len(self.rendered)+1}/{self.total}] {participant_name}",
+            title=f"[{len(self.rendered)}/{self.total}] {participant_name}",
             title_align="left",
             border_style=role_style[role],
         )

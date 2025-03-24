@@ -13,7 +13,7 @@ from utils import load_simulation
 
 
 def main():
-    """Invoke simulation run ."""
+    """Invoke simulation run."""
     args = parse_args()
 
     sim_name = args.sim
@@ -22,7 +22,7 @@ def main():
 
     final_state: Optional[SimulationState] = None
 
-    printer = SimulationPrinter(total_steps=sim.config.rounds * 2)
+    printer = SimulationPrinter(total_steps=sim.config.rounds * 2, sim_name=sim_name)
     printer.start()
 
     for chunk in stream_simulation(sim):
