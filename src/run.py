@@ -9,6 +9,7 @@ from langchain_ollama import ChatOllama
 
 from agents import simulation_agent as app
 from config import load_simulation
+from constants import Roles
 
 parser = argparse.ArgumentParser(description="Run a 2-agent dialogue simulation.")
 parser.add_argument(
@@ -23,10 +24,10 @@ sim_name = args.sim
 
 sim = load_simulation(sim_name)
 
-initiator = sim["initiator"]
-responder = sim["responder"]
+initiator = sim[Roles.INITIATOR]
+responder = sim[Roles.RESPONDER]
 
-initial_message = sim["initiator"]["initial_message"]
+initial_message = initiator["initial_message"]
 
 final_state = None
 
@@ -34,24 +35,27 @@ for chunk in app.stream(
     {
         "conversation": [
             {
-                "role": "initiator",
+                "role": Roles.INITIATOR,
                 "message": HumanMessage(content=initial_message),
             }
         ],
         "MAX_MESSAGES": sim["config"]["rounds"] * 2,
-        "initiator": {
+        Roles.INITIATOR: {
             "llm": ChatOllama(model=initiator["model_name"]),
             **initiator,
         },
-        "responder": {"llm": ChatOllama(model=responder["model_name"]), **responder},
+        Roles.RESPONDER: {
+            "llm": ChatOllama(model=responder["model_name"]),
+            **responder,
+        },
     },
     stream_mode="values",
 ):
 
     role = (
-        f"""{initiator["name"]} (Initiator)"""
-        if chunk["conversation"][-1]["role"] == "initiator"
-        else f"""{responder["name"]} (Responder)"""
+        f"""{initiator["name"]} ({Roles.INITIATOR.capitalize()})"""
+        if chunk["conversation"][-1]["role"] == Roles.INITIATOR
+        else f"""{responder["name"]} ({Roles.RESPONDER.capitalize()})"""
     )
 
     message = chunk["conversation"][-1]["message"]
@@ -64,14 +68,14 @@ if final_state:
     chat_id = datetime.datetime.now().isoformat()
     chat_log = {
         "chat_id": chat_id,
-        "initiator": sim["initiator"],
-        "responder": sim["responder"],
+        Roles.INITIATOR: sim[Roles.INITIATOR],
+        Roles.RESPONDER: sim[Roles.RESPONDER],
         "conversation": [
             {
                 "role": item["role"],
                 "name": (
                     initiator["name"]
-                    if item["role"] == "initiator"
+                    if item["role"] == Roles.INITIATOR
                     else responder["name"]
                 ),
                 "message": item["message"].content,

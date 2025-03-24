@@ -1,9 +1,8 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "baby": "./src/agents/baby.py:graph",
-    "daddy": "./src/agents/daddy.py:graph",
-    "simulation": "./src/agents/simulation.py:graph"
+    "dialogue_agent": "./src/agents/dialogue_agent.py.py:graph",
+    "simulation_agent": "./src/agents/simulation_agent.py:graph"
   },
   "env": ".env"
 }

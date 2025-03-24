@@ -1,17 +1,19 @@
 """Simulation Agent."""
 
-from typing import Any, Dict, List, Literal, TypedDict
+from typing import Any, Dict, List, TypedDict
 
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.message import Messages
 
 from agents import dialogue_agent
+from constants import Roles
 
 
 class ConversationItem(TypedDict):
     """Conversation item."""
 
-    role: Literal["initiator", "responder"]
+    role: Roles
     message: AIMessage | HumanMessage
 
 
@@ -25,7 +27,7 @@ class SimulationState(TypedDict):
 
 
 def prepare_messages(
-    human_role: Literal["initiator", "responder"], conversation: List[ConversationItem]
+    human_role: Roles, conversation: List[ConversationItem]
 ) -> List[AIMessage | HumanMessage]:
     """Map the messages to roles before agent call."""
     results = []
@@ -42,41 +44,57 @@ def prepare_messages(
     return results
 
 
-def initiator_caller_node(state: SimulationState):
-    """Call initiator agent."""
-    initiator = state["initiator"]
-    conversation = state["conversation"]
+def call_dialogue_agent(
+    conversation: List[ConversationItem], role: Roles, llm: Any, system_prompt: str
+):
+    """Call dialogue agent."""
+    human_role = Roles.RESPONDER if role == Roles.INITIATOR else Roles.INITIATOR
 
-    messages = prepare_messages(human_role="responder", conversation=conversation)
-    response = dialogue_agent.invoke(
+    messages = prepare_messages(human_role=human_role, conversation=conversation)
+
+    return dialogue_agent.invoke(
         {
             "messages": messages,
-            **initiator,
+            "llm": llm,
+            "role": role,
+            "system_prompt": system_prompt,
         }
+    )
+
+
+def initiator_caller_node(state: SimulationState):
+    """Call initiator agent."""
+    initiator = state[Roles.INITIATOR.value]
+    conversation = state["conversation"]
+
+    response = call_dialogue_agent(
+        conversation=conversation,
+        role=Roles.INITIATOR,
+        llm=initiator["llm"],
+        system_prompt=initiator["system_prompt"],
     )
 
     return {
         "conversation": state["conversation"]
-        + [{"role": "initiator", "message": response["messages"][-1]}]
+        + [{"role": Roles.INITIATOR, "message": response["messages"][-1]}]
     }
 
 
 def responder_caller_node(state: SimulationState):
     """Call responder agent."""
-    responder = state["responder"]
+    responder = state[Roles.RESPONDER.value]
     conversation = state["conversation"]
 
-    messages = prepare_messages(human_role="initiator", conversation=conversation)
-    response = dialogue_agent.invoke(
-        {
-            "messages": messages,
-            **responder,
-        }
+    response = call_dialogue_agent(
+        conversation=conversation,
+        role=Roles.RESPONDER,
+        llm=responder["llm"],
+        system_prompt=responder["system_prompt"],
     )
 
     return {
         "conversation": state["conversation"]
-        + [{"role": "responder", "message": response["messages"][-1]}]
+        + [{"role": Roles.RESPONDER, "message": response["messages"][-1]}]
     }
 
 

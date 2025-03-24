@@ -1,6 +1,5 @@
 """Dialogue agent."""
 
-import json
 from typing import Any
 
 from langchain_core.messages import (
@@ -23,7 +22,6 @@ def chat_node(state: State):
     system = SystemMessage(state["system_prompt"])
 
     response = llm.invoke([system] + state["messages"])
-    response.type = state["role"]
 
     return {"messages": response}
 
