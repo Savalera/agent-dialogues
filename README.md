@@ -1,5 +1,8 @@
 # Agent dialogue simulations
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15082312.svg)](https://doi.org/10.5281/zenodo.15082312)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Runs simulated dialogues between LLM agents via LangGraph.
 
 ## Why do this?
