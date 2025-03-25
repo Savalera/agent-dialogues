@@ -89,3 +89,19 @@ uv run src/sim-cli.py --sim baby-daddy
 ## Output
 
 The simulation prints the conversation output to the console, and saves a conversation log file under the `logs` directory.
+
+## Citation
+
+If you use this project, please cite it as below:
+
+```bibtex
+@software{Takacs_Agent_Dialogues_Multi-Agent_2025,
+author = {Takács, Márk},
+doi = {10.5281/zenodo.15082311},
+month = mar,
+title = {{Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research}},
+url = {https://github.com/savalera/agent-dialogues},
+version = {0.1.0-alpha.1},
+year = {2025}
+}
+```
