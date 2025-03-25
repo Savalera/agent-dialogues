@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this project, please cite it as below."
+authors:
+  - family-names: Takács
+    given-names: Márk
+    orcid: https://orcid.org/0009-0000-3156-1765
+    affiliation: Savalera Agentic Lab
+title: "Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research"
+version: "0.1.0-alpha.1"
+date-released: 2025-03-25
+url: https://github.com/savalera/agent-dialogues
