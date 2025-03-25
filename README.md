@@ -29,6 +29,7 @@ We use it for simulated conversations to check language model and agent behavior
 
 ### Planned features:
 
+- Batch mode.
 - Classification of conversation messages for personality traits.
 - Self assessment and adoption mid-conversation.
 
@@ -38,12 +39,47 @@ Simulations are defined under the `sims` directory, check `sims/baby-daddy.yaml`
 
 ## How to run
 
-1. Clone this repo.
-2. Install dependencies.
-3. Add your simulation configuration in the `sims` directory.
-4. Run with `src/sim-cli.py` with the `sim` argument, for example:
+### Run with `python3` + `pip`
 
-```sh
+```bash
+# 1. Clone this repo
+git clone https://github.com/savalera/agent-dialogues.git
+cd agent-dialogues
+
+# 2. Create a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. Install dependencies from `requirements.txt`
+pip install -r requirements.txt
+
+# 4. Add your simulation configuration
+#    Place your config in the `sims/` directory.
+#    See `sims/baby-daddy.yaml` for an example.
+
+# 5. Run the simulation
+python3 src/sim-cli.py --sim baby-daddy
+```
+
+## Run with `uv`
+
+```bash
+# 1. Clone this repo
+git clone https://github.com/savalera/agent-dialogues.git
+cd agent-dialogues
+
+# 2. Create a virtual environment
+uv venv .venv
+source .venv/bin/activate
+
+# 3. Install dependencies from `pyproject.toml`
+uv sync
+
+# 4. Add your simulation configuration
+#    Place your config in the `sims/` directory.
+#    See `sims/baby-daddy.yaml` for an example.
+
+# 5. Run the simulation
 uv run src/sim-cli.py --sim baby-daddy
 ```
 

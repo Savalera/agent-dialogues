@@ -22,21 +22,28 @@ def main():
 
     final_state: Optional[SimulationState] = None
 
-    printer = SimulationPrinter(total_steps=sim.config.rounds * 2, sim_name=sim_name)
-    printer.start()
+    console = SimulationPrinter(total_steps=sim.config.rounds * 2, sim_name=sim_name)
+
+    console.spinner.start()
 
     for chunk in stream_simulation(sim):
+
         message = chunk.conversation[-1].message.content
         role = chunk.conversation[-1].role
         participant_name = (
             sim.initiator.name if role == Roles.INITIATOR else sim.responder.name
         )
 
-        printer.update(role=role, participant_name=participant_name, message=message)
+        console.spinner.stop()
+        console.print_dialogue_message(
+            role=role,
+            participant_name=participant_name,
+            message=message,
+            count=len(chunk.conversation),
+        )
+        console.spinner.start()
 
         final_state = chunk
-
-    printer.stop()
 
     if final_state:
         chat_id = datetime.datetime.now().isoformat()

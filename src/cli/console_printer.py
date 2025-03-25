@@ -1,9 +1,10 @@
 """Command line interface printer."""
 
-from rich.console import Console, Group
-from rich.live import Live
+import datetime
+
+from rich.console import Console
 from rich.panel import Panel
-from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+from rich.table import Table
 from rich.text import Text
 
 from domain import Roles
@@ -26,6 +27,11 @@ role_style = {
     Roles.RESPONDER: "bold cyan",
 }
 
+SAVALERA_LIGHT_BLUE = "#d1ecfa"
+SAVALERA_LIGHT_YELLOW = "#faf7d1"
+SAVALERA_PURPLE = "#cb9cfa"
+SAVALERA_YELLOW = "#faea9c"
+
 
 class SimulationPrinter:
     """Simulation printer."""
@@ -35,55 +41,58 @@ class SimulationPrinter:
         self.total = total_steps
         self.sim_name = sim_name
         self.console = Console()
-        self.progress = Progress(
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TextColumn("{task.completed}/{task.total} steps"),
-            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-            TimeElapsedColumn(),
-        )
-        self.task_id = self.progress.add_task(
-            "Simulating dialogue...", total=total_steps
-        )
-        self.rendered = []
-        self.live = Live(console=self.console, refresh_per_second=1, transient=True)
 
-    def start(self):
-        """Start console UI."""
-        self.progress.start()
-        self.live.start()
-
-        panel = Panel(
+        title = Panel(
             Text.from_markup(
-                f"[#faf7d1]{ascii_title}[/#faf7d1]"
-                + f"\n[#d1ecfa]Agentic Lab[/#d1ecfa]\n\nAgent Dialogue Simulation\n\n[bold cyan]Running simulation [#cb9cfa]`{self.sim_name}`[/#cb9cfa] with [#faea9c]{self.total}[/#faea9c] steps.",
+                f"[{SAVALERA_LIGHT_YELLOW}]{ascii_title}[/{SAVALERA_LIGHT_YELLOW}]"
+                + f"\n[{SAVALERA_LIGHT_BLUE}]Agentic Lab[/{SAVALERA_LIGHT_BLUE}]\n\nAgent Dialogue Simulation\n\n[bold cyan]Running simulation [{SAVALERA_PURPLE}]`{self.sim_name}`[/{SAVALERA_PURPLE}] with [{SAVALERA_YELLOW}]{self.total}[/{SAVALERA_YELLOW}] steps.",
                 justify="center",
             ),
             border_style="blue",
             expand=True,
             padding=(1, 4),
         )
+        self.console.print(title)
 
-        self.rendered.append(panel)
-        self.live.update(Group(*self.rendered, self.progress), refresh=True)
+        self.print_status_message()
 
-    def update(self, role, participant_name, message):
-        """Update console UI."""
+        self.spinner = self.console.status(
+            f"[{SAVALERA_LIGHT_YELLOW}]Running simulation...",
+            spinner="dots",
+            spinner_style=f"{SAVALERA_YELLOW}",
+        )
+
+    def print_dialogue_message(self, role, participant_name, message, count):
+        """Print dialogoue message."""
         panel = Panel.fit(
             Text(message.strip(), style="white"),
-            title=f"[{len(self.rendered)}/{self.total}] {participant_name}",
+            title=f"\\[{count}/{self.total}] {participant_name}",
             title_align="left",
             border_style=role_style[role],
         )
+        self.console.print(panel)
 
-        self.rendered.append(panel)
-        self.live.update(Group(*self.rendered, self.progress), refresh=True)
-        self.progress.update(self.task_id, advance=1)
+    def print_status_message(self, batch_mode: bool = False):
+        """Print status message."""
+        table = Table.grid(padding=(0, 1))
+        table.add_column(justify="right", style="bold cyan")
+        table.add_column()
 
-    def stop(self):
-        """Stop console UI."""
-        self.progress.stop()
-        self.live.stop()
-        self.console.clear()
-        for panel in self.rendered:
-            self.console.print(panel)
+        table.add_row(
+            "Start time", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        table.add_row("Simulation", self.sim_name)
+        table.add_row("Batch mode", str(batch_mode))
+        table.add_row("Rounds per run", str(self.total))
+        table.add_row("Total runs", str(1))
+        table.add_row("Output dir", "./logs/")
+        table.add_row("Debug", "False")
+
+        panel = Panel.fit(
+            table,
+            title="Job Info",
+            title_align="left",
+            border_style=f"bold {SAVALERA_LIGHT_YELLOW}",
+        )
+
+        self.console.print(panel)
