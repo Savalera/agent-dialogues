@@ -1,35 +1,45 @@
 """Dialogue agent."""
 
-from typing import List
+from typing import Any, cast
 
 from langchain_core.messages import (
     AnyMessage,
+    BaseMessage,
     SystemMessage,
 )
-from langchain_core.runnables import Runnable
+from langchain_core.runnables.base import Runnable
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ConfigDict
 
 from exceptions import LLMInvocationError
 
 
-class State(BaseModel):
-    """Agent state."""
+class DialogueAgentConfig(BaseModel):
+    """Dialogue agent configuration."""
 
-    messages: List[AnyMessage]
-    llm: Runnable
+    llm: Runnable[list[BaseMessage], list[BaseMessage]]
     system_prompt: str
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-def chat_node(state: State):
+class State(BaseModel):
+    """Agent state."""
+
+    messages: list[AnyMessage]
+    llm: Runnable[list[BaseMessage], list[BaseMessage]]
+    system_prompt: str
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+def chat_node(state: State) -> dict[str, Any]:
     """Dialogue chat node."""
     llm = state.llm
     system = SystemMessage(state.system_prompt)
 
     try:
-        response = llm.invoke([system] + state.messages)
+        response = llm.invoke([system] + cast(list[BaseMessage], state.messages))
     except Exception as e:
         raise LLMInvocationError("LLM invocation failed in dialogue agent.") from e
 

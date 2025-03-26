@@ -62,7 +62,9 @@ class SimulationPrinter:
             spinner_style=f"{SAVALERA_YELLOW}",
         )
 
-    def print_dialogue_message(self, role, participant_name, message, count):
+    def print_dialogue_message(
+        self, role: Roles, participant_name: str, message: str, count: int
+    ) -> None:
         """Print dialogue message."""
         panel = Panel.fit(
             Text(message.strip(), style="white"),
@@ -72,7 +74,7 @@ class SimulationPrinter:
         )
         self.console.print(panel)
 
-    def print_status_message(self, batch_mode: bool = False):
+    def print_status_message(self, batch_mode: bool = False) -> None:
         """Print status message."""
         table = Table.grid(padding=(0, 1))
         table.add_column(justify="right", style="bold cyan")

@@ -1,16 +1,17 @@
 """Command Line runner."""
 
-from typing import Generator
+from typing import Generator, cast
 
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import BaseMessage, HumanMessage
+from langchain_core.runnables.base import Runnable
 from langchain_ollama import ChatOllama
 
-from agents import simulation_agent as app
+from agents.dialogue_agent import DialogueAgentConfig
 from agents.simulation_agent import (
     ConversationItem,
-    DialogueAgentConfig,
     SimulationState,
 )
+from agents.simulation_agent import graph as app
 from domain import Roles, Simulation
 from exceptions import SimulationExecutionError
 
@@ -19,12 +20,18 @@ def stream_simulation(sim: Simulation) -> Generator[SimulationState, None, None]
     """Yield each step of streamed simulation."""
     try:
         initiator = DialogueAgentConfig(
-            llm=ChatOllama(model=sim.initiator.model_name),
+            llm=cast(
+                Runnable[list[BaseMessage], list[BaseMessage]],
+                ChatOllama(model=sim.initiator.model_name),
+            ),
             system_prompt=sim.initiator.system_prompt,
         )
 
         responder = DialogueAgentConfig(
-            llm=ChatOllama(model=sim.responder.model_name),
+            llm=cast(
+                Runnable[list[BaseMessage], list[BaseMessage]],
+                ChatOllama(model=sim.responder.model_name),
+            ),
             system_prompt=sim.responder.system_prompt,
         )
 

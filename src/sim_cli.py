@@ -22,7 +22,7 @@ log_dir.mkdir(parents=True, exist_ok=True)
 logger = logging.getLogger("cli")
 
 
-def main():
+def main() -> None:
     """Invoke simulation run."""
     console = None
     final_state: Optional[SimulationState] = None
@@ -32,8 +32,6 @@ def main():
 
         sim_name = args.sim
         sim = Simulation.model_validate(load_simulation(sim_name))
-
-        final_state: Optional[SimulationState] = None
 
         console = SimulationPrinter(
             total_steps=sim.config.rounds * 2, sim_name=sim_name
@@ -53,7 +51,7 @@ def main():
             console.print_dialogue_message(
                 role=role,
                 participant_name=participant_name,
-                message=message,
+                message=str(message),
                 count=len(chunk.conversation),
             )
             console.spinner.start()

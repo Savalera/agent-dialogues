@@ -12,8 +12,10 @@ dependencies = [
     "argparse>=1.4.0",
     "langchain-ollama>=0.2.3",
     "langgraph>=0.2.6",
+    "mypy>=1.15.0",
     "python-dotenv>=1.0.1",
     "rich>=13.9.4",
+    "ruff>=0.9.7",
 ]
 
 [dependency-groups]
@@ -21,10 +23,15 @@ dev = [
     "langgraph-cli>=0.1.73",
     "pytest>=8.3.5",
     "pytest-cov>=6.0.0",
+    "types-pyyaml>=6.0.12.20250326",
 ]
 
 [project.optional-dependencies]
 dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
+
+[tool.mypy]
+mypy_path = "src"
+explicit_package_bases = true
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
