@@ -1,7 +1,9 @@
 # Agent dialogue simulations
 
-[![CI](https://github.com/Savalera/agent-dialogues/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/Savalera/agent-dialogues/actions/workflows/unit-tests.yml)[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15082312.svg)](https://doi.org/10.5281/zenodo.15082312)
+[![CI](https://github.com/Savalera/agent-dialogues/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/Savalera/agent-dialogues/actions/workflows/unit-tests.yml)
+[![Integration Tests](https://github.com/Savalera/agent-dialogues/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/Savalera/agent-dialogues/actions/workflows/integration-tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15082312.svg)](https://doi.org/10.5281/zenodo.15082312)
 
 Runs simulated dialogues between LLM agents via LangGraph.
 
