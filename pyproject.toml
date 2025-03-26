@@ -3,7 +3,7 @@ name = "agent-dialogues"
 version = "0.1.0-alpha.1"
 description = "Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research"
 authors = [
-    { name = "Mark Takacs", email = "mark.takacs@savalera.com" },
+    { name = "Márk Tákacs", email = "mark.takacs@savalera.com" },
 ]
 readme = "README.md"
 license = { text = "MIT" }
@@ -16,9 +16,18 @@ dependencies = [
     "rich>=13.9.4",
 ]
 
+[dependency-groups]
+dev = [
+    "langgraph-cli>=0.1.73",
+    "pytest>=8.3.5",
+    "pytest-cov>=6.0.0",
+]
 
 [project.optional-dependencies]
 dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
 
 [build-system]
 requires = ["setuptools>=73.0.0", "wheel"]
@@ -29,7 +38,6 @@ packages = ["langgraph.templates.agent", "agent"]
 [tool.setuptools.package-dir]
 "langgraph.templates.agent" = "src/agents"
 "agent" = "src/agents"
-
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
@@ -57,8 +65,3 @@ lint.ignore = [
 "tests/*" = ["D", "UP"]
 [tool.ruff.lint.pydocstyle]
 convention = "google"
-
-[dependency-groups]
-dev = [
-    "langgraph-cli>=0.1.73",
-]

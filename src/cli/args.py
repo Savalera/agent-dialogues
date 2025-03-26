@@ -2,6 +2,8 @@
 
 import argparse
 
+from exceptions import ArgumentParsingError
+
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
@@ -13,4 +15,7 @@ def parse_args() -> argparse.Namespace:
         help="Name of the simulation to load from the `sims` directory (e.g. 'baby-daddy')",
     )
 
-    return parser.parse_args()
+    try:
+        return parser.parse_args()
+    except SystemExit as e:
+        raise ArgumentParsingError("Failed to parse command-line arguments.") from e

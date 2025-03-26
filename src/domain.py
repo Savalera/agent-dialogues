@@ -2,7 +2,7 @@
 
 from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
 
 
 class Roles(str, Enum):
@@ -30,7 +30,7 @@ class DialogueInitiator(DialogueParticipant):
 class SimulationConfig(BaseModel):
     """Configuration for the simulation."""
 
-    rounds: int
+    rounds: PositiveInt
 
 
 class Simulation(BaseModel):

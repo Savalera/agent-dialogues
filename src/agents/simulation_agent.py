@@ -9,7 +9,9 @@ from langgraph.graph.message import AnyMessage
 from pydantic import BaseModel, ConfigDict
 
 from agents import dialogue_agent
+from agents.dialogue_agent import State as DialogueAgentState
 from domain import Roles
+from exceptions import DialogueAgentError
 
 
 class ConversationItem(BaseModel):
@@ -25,7 +27,7 @@ Conversation = List[ConversationItem]
 
 
 class DialogueAgentConfig(BaseModel):
-    """Dialoge agent configuration."""
+    """Dialogue agent configuration."""
 
     llm: Runnable
     system_prompt: str
@@ -68,14 +70,19 @@ def call_dialogue_agent(
 
     messages = prepare_messages(human_role=human_role, conversation=conversation)
 
-    return dialogue_agent.invoke(
-        {
-            "messages": messages,
-            "llm": llm,
-            "role": role,
-            "system_prompt": system_prompt,
-        }
-    )
+    try:
+        return dialogue_agent.invoke(
+            {
+                "messages": messages,
+                "llm": llm,
+                "role": role,
+                "system_prompt": system_prompt,
+            }
+        )
+    except Exception as e:
+        raise DialogueAgentError(
+            f"Dialogue agent invocation failed for role '{role}'."
+        ) from e
 
 
 def initiator_caller_node(state: SimulationState):
@@ -87,9 +94,12 @@ def initiator_caller_node(state: SimulationState):
         system_prompt=state.initiator.system_prompt,
     )
 
+    r = DialogueAgentState(**response)
+    message = r.messages[-1]
+
     return {
         "conversation": state.conversation
-        + [{"role": Roles.INITIATOR, "message": response["messages"][-1]}]
+        + [ConversationItem(role=Roles.INITIATOR, message=message)]
     }
 
 
@@ -102,9 +112,12 @@ def responder_caller_node(state: SimulationState):
         system_prompt=state.responder.system_prompt,
     )
 
+    r = DialogueAgentState(**response)
+    message = r.messages[-1]
+
     return {
         "conversation": state.conversation
-        + [{"role": Roles.RESPONDER, "message": response["messages"][-1]}]
+        + [ConversationItem(role=Roles.RESPONDER, message=message)]
     }
 
 

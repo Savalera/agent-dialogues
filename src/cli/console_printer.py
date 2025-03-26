@@ -63,7 +63,7 @@ class SimulationPrinter:
         )
 
     def print_dialogue_message(self, role, participant_name, message, count):
-        """Print dialogoue message."""
+        """Print dialogue message."""
         panel = Panel.fit(
             Text(message.strip(), style="white"),
             title=f"\\[{count}/{self.total}] {participant_name}",

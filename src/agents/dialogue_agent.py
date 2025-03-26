@@ -10,6 +10,8 @@ from langchain_core.runnables import Runnable
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ConfigDict
 
+from exceptions import LLMInvocationError
+
 
 class State(BaseModel):
     """Agent state."""
@@ -26,7 +28,10 @@ def chat_node(state: State):
     llm = state.llm
     system = SystemMessage(state.system_prompt)
 
-    response = llm.invoke([system] + state.messages)
+    try:
+        response = llm.invoke([system] + state.messages)
+    except Exception as e:
+        raise LLMInvocationError("LLM invocation failed in dialogue agent.") from e
 
     return {"messages": state.messages + [response]}
 

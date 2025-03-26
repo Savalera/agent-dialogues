@@ -1,6 +1,6 @@
 # Agent dialogue simulations
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15082312.svg)](https://doi.org/10.5281/zenodo.15082312)
+[![CI](https://github.com/Savalera/agent-dialogues/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/Savalera/agent-dialogues/actions/workflows/unit-tests.yml)[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15082312.svg)](https://doi.org/10.5281/zenodo.15082312)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Runs simulated dialogues between LLM agents via LangGraph.
@@ -61,7 +61,7 @@ pip install -r requirements.txt
 #    See `sims/baby-daddy.yaml` for an example.
 
 # 5. Run the simulation
-python3 src/sim-cli.py --sim baby-daddy
+python3 src/sim_cli.py --sim baby-daddy
 ```
 
 ## Run with `uv`
@@ -76,14 +76,14 @@ uv venv .venv
 source .venv/bin/activate
 
 # 3. Install dependencies from `pyproject.toml`
-uv sync
+uv pip install -r pyproject.toml
 
 # 4. Add your simulation configuration
 #    Place your config in the `sims/` directory.
 #    See `sims/baby-daddy.yaml` for an example.
 
 # 5. Run the simulation
-uv run src/sim-cli.py --sim baby-daddy
+uv run src/sim_cli.py --sim baby-daddy
 ```
 
 ## Output
