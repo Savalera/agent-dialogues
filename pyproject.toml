@@ -1,5 +1,5 @@
 [project]
-name = "agent-dialogues"
+name = "agentdialogues"
 version = "0.1.0-alpha.1"
 description = "Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research"
 authors = [
@@ -20,7 +20,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "langgraph-cli>=0.1.73",
+    "langgraph-cli[inmem]>=0.1.73",
     "pytest>=8.3.5",
     "pytest-cov>=6.0.0",
     "types-pyyaml>=6.0.12.20250326",
@@ -30,21 +30,20 @@ dev = [
 dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
 
 [tool.mypy]
-mypy_path = "src"
+mypy_path = "."
 explicit_package_bases = true
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["."]
 
 [build-system]
 requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["langgraph.templates.agent", "agent"]
+packages = ["agentdialogues"]
 [tool.setuptools.package-dir]
-"langgraph.templates.agent" = "src/agents"
-"agent" = "src/agents"
+"agentdialogues" = "agentdialogues"
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]

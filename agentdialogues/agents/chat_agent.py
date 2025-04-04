@@ -1,4 +1,4 @@
-"""Dialogue agent."""
+"""Chat agent."""
 
 from typing import Any, cast
 
@@ -9,33 +9,42 @@ from langchain_core.messages import (
 )
 from langchain_core.runnables.base import Runnable
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 from pydantic import BaseModel, ConfigDict
 
-from exceptions import LLMInvocationError
+from agentdialogues.exceptions import LLMInvocationError
+
+# ⬇ Global runtime constants — set via init_agent)
+llm: Runnable[list[BaseMessage], list[BaseMessage]]
 
 
-class DialogueAgentConfig(BaseModel):
-    """Dialogue agent configuration."""
+# === Agent schema ===
+ChatAgent = CompiledStateGraph
+
+
+class ChatAgentConfig(BaseModel):
+    """Chat agent configuration."""
 
     llm: Runnable[list[BaseMessage], list[BaseMessage]]
-    system_prompt: str
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-class State(BaseModel):
-    """Agent state."""
+# === Agent state ===
+class ChatAgentState(BaseModel):
+    """Chat state."""
 
     messages: list[AnyMessage]
-    llm: Runnable[list[BaseMessage], list[BaseMessage]]
     system_prompt: str
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-def chat_node(state: State) -> dict[str, Any]:
+# === Graph nodes and edges ===
+def chat_node(state: ChatAgentState) -> dict[str, Any]:
     """Dialogue chat node."""
-    llm = state.llm
+    global llm
+
     system = SystemMessage(state.system_prompt)
 
     try:
@@ -46,10 +55,22 @@ def chat_node(state: State) -> dict[str, Any]:
     return {"messages": state.messages + [response]}
 
 
-workflow = StateGraph(State)
+# === Graph builder ===
+workflow = StateGraph(ChatAgentState)
 workflow.add_node("agent", chat_node)
 
 workflow.add_edge(START, "agent")
 workflow.add_edge("agent", END)
 
 graph = workflow.compile()
+
+
+# === Agent creator ===
+def create_chat_agent(config: dict[str, Any]) -> ChatAgent:
+    """Create chat agent."""
+    global llm
+
+    agent_config = ChatAgentConfig(**config)
+    llm = agent_config.llm
+
+    return graph

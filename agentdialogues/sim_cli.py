@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
-"""Simulation Command Line Runner."""
+"""Agent Dialgoues simulation Command Line Runner."""
+
 
 import datetime
 import json
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from rich.logging import RichHandler
 
-from agents.simulation_agent import SimulationState
-from cli import SimulationPrinter, parse_args
-from domain import Roles, Simulation
-from exceptions import SimulationError
-from run import stream_simulation
-from utils import load_simulation
+from agentdialogues.core.base import Roles
+from agentdialogues.core.bootstrap import bootstrap_simulation
+from agentdialogues.exceptions import SimulationError
+from agentdialogues.utils import SimulationPrinter, parse_args
 
 log_dir = Path("logs")
 log_dir.mkdir(parents=True, exist_ok=True)
@@ -25,26 +24,34 @@ logger = logging.getLogger("cli")
 def main() -> None:
     """Invoke simulation run."""
     console = None
-    final_state: Optional[SimulationState] = None
+    final_state: Optional[dict[str, Any]] = None
 
     try:
         args = parse_args()
 
-        sim_name = args.sim
-        sim = Simulation.model_validate(load_simulation(sim_name))
+        simulation_module_path = args.sim
+        simulation_config_path = args.config
+
+        app, initial_state, config = bootstrap_simulation(
+            simulation_module_path, simulation_config_path
+        )
 
         console = SimulationPrinter(
-            total_steps=sim.config.rounds * 2, sim_name=sim_name
+            total_steps=config["rounds"] * 2, sim_name=config["name"]
         )
 
         console.spinner.start()
 
-        for chunk in stream_simulation(sim):
-
-            message = chunk.conversation[-1].message.content
-            role = chunk.conversation[-1].role
+        for chunk in app.stream(
+            initial_state,
+            stream_mode="values",
+        ):
+            message = chunk["dialogue"][-1].message.content
+            role = chunk["dialogue"][-1].role
             participant_name = (
-                sim.initiator.name if role == Roles.INITIATOR else sim.responder.name
+                config["initiator"]["name"]
+                if role == Roles.INITIATOR
+                else config["responder"]["name"]
             )
 
             console.spinner.stop()
@@ -52,7 +59,7 @@ def main() -> None:
                 role=role,
                 participant_name=participant_name,
                 message=str(message),
-                count=len(chunk.conversation),
+                count=len(chunk["dialogue"]),
             )
             console.spinner.start()
 
@@ -62,19 +69,19 @@ def main() -> None:
             chat_id = datetime.datetime.now().isoformat()
             chat_log = {
                 "chat_id": chat_id,
-                Roles.INITIATOR: sim.initiator.model_dump(),
-                Roles.RESPONDER: sim.responder.model_dump(),
-                "conversation": [
+                Roles.INITIATOR: config["initiator"],
+                Roles.RESPONDER: config["responder"],
+                "dialogue": [
                     {
                         "role": item.role,
                         "name": (
-                            sim.initiator.name
+                            config["initiator"]["name"]
                             if item.role == Roles.INITIATOR
-                            else sim.responder.name
+                            else config["responder"]["name"]
                         ),
                         "message": item.message.content,
                     }
-                    for item in final_state.conversation
+                    for item in final_state["dialogue"]
                 ],
             }
 

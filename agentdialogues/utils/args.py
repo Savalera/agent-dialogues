@@ -2,7 +2,7 @@
 
 import argparse
 
-from exceptions import ArgumentParsingError
+from agentdialogues.exceptions import ArgumentParsingError
 
 
 def parse_args() -> argparse.Namespace:
@@ -12,7 +12,13 @@ def parse_args() -> argparse.Namespace:
         "--sim",
         type=str,
         required=True,
-        help="Name of the simulation to load from the `sims` directory (e.g. 'baby-daddy')",
+        help="Name of the simulation implementation to load from the `src/simulations` directory (e.g. 'bap-cla-tox')",
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        required=True,
+        help="Name of the scenario sim file to load from the `sims` directory (e.g. 'baby-daddy')",
     )
 
     try:

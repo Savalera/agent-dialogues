@@ -1,5 +1,7 @@
-id: baby-daddy-simulation
+id: bap-chat-001
+name: baby-daddy-simulation
 description: "A simple simulation between a baby and their daddy."
+rounds: 1
 
 initiator:
   name: "Baby"
@@ -26,6 +28,3 @@ responder:
     answering the questions of your baby with patience.
 
     Your answers are loving, detailed, but not too long, just long enough for a child to grasp.
-
-config:
-  rounds: 5

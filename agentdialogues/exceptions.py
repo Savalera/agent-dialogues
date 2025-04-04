@@ -29,5 +29,9 @@ class SimulationExecutionError(SimulationError):
     """Raised when simulation execution fails (e.g. model config or runtime error)."""
 
 
+class SimulationModuleError(SimulationError):
+    """Raised when dynamic simulation loading fails."""
+
+
 class YAMLParsingError(SimulationError):
     """Raised when a YAML file cannot be parsed."""
