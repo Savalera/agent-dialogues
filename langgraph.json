@@ -2,7 +2,8 @@
   "dependencies": ["."],
   "graphs": {
     "chat_agent": "./agentdialogues/agents/chat_agent.py:graph",
-    "bap_chat": "./simulations/bap_chat/bap_chat.py:graph"
+    "bap_chat": "./simulations/bap_chat/bap_chat.py:graph",
+    "bap_cla_tox": "./simulations/bap_cla_tox/bap_cla_tox.py:graph"
   },
   "env": ".env"
 }
