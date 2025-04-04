@@ -37,7 +37,7 @@ def main() -> None:
         )
 
         console = SimulationPrinter(
-            total_steps=config["rounds"] * 2, sim_name=config["name"]
+            total_steps=config["runtime"]["rounds"] * 2, sim_name=config["name"]
         )
 
         console.spinner.start()
@@ -71,6 +71,7 @@ def main() -> None:
                 "chat_id": chat_id,
                 Roles.INITIATOR: config["initiator"],
                 Roles.RESPONDER: config["responder"],
+                "runtime": config["runtime"],
                 "dialogue": [
                     {
                         "role": item.role,

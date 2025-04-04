@@ -118,13 +118,13 @@ def create_simulation(config: dict[str, Any]) -> Simulation:
 
     simulation_config = DialogueSimulationConfig(**config)
 
-    MAX_MESSAGES = simulation_config.rounds * 2
+    MAX_MESSAGES = simulation_config.runtime.rounds * 2
 
     initiator = create_chat_agent(
         {
             "llm": cast(
                 Runnable[list[BaseMessage], list[BaseMessage]],
-                ChatOllama(model=simulation_config.initiator.model_name),
+                ChatOllama(model=simulation_config.initiator.model.model_name),
             )
         }
     )
@@ -133,7 +133,7 @@ def create_simulation(config: dict[str, Any]) -> Simulation:
         {
             "llm": cast(
                 Runnable[list[BaseMessage], list[BaseMessage]],
-                ChatOllama(model=simulation_config.responder.model_name),
+                ChatOllama(model=simulation_config.responder.model.model_name),
             )
         }
     )
@@ -141,7 +141,7 @@ def create_simulation(config: dict[str, Any]) -> Simulation:
     dialogue = [
         DialogueItem(
             role=Roles.INITIATOR,
-            message=HumanMessage(content=simulation_config.initiator.initial_message),
+            message=HumanMessage(content=simulation_config.initiator.messages[0]),
         )
     ]
 

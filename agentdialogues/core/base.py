@@ -1,6 +1,7 @@
 """Agent Dialogues domain objects."""
 
 from enum import Enum
+from typing import Literal, Optional
 
 from langchain_core.messages import AnyMessage
 from langgraph.graph.state import CompiledStateGraph
@@ -56,6 +57,18 @@ class BaseSimulationConfig(BaseModel):
 
     id: str
     name: str
+
+
+class ChatModelConfig(BaseModel):
+    """Chat model config."""
+
+    model_name: str
+    provider: Literal["Ollama", "HuggingFace", "HFApi"]
+
+
+class RuntimeConfig(BaseModel):
+    """Simulation runtime config."""
+
     rounds: PositiveInt
 
 
@@ -70,12 +83,12 @@ class DialogueParticipantConfig(BaseModel):
     """
 
     name: str
-    persona: str
-    model_name: str
+    role: str
+    model: ChatModelConfig
     system_prompt: str
 
 
-class DialogueInitiatorConfig(DialogueParticipantConfig):
+class DialogueParticipantWithMessagesConfig(DialogueParticipantConfig):
     """A dialogue participant that initiates the dialogue.
 
     Inherits from:
@@ -85,7 +98,7 @@ class DialogueInitiatorConfig(DialogueParticipantConfig):
         initial_message: The message that starts the dialogue.
     """
 
-    initial_message: str
+    messages: list[str]
 
 
 class DialogueSimulationConfig(BaseSimulationConfig):
@@ -99,5 +112,6 @@ class DialogueSimulationConfig(BaseSimulationConfig):
         responder: The agent who responds to the initiator.
     """
 
-    initiator: DialogueInitiatorConfig
+    initiator: DialogueParticipantWithMessagesConfig
     responder: DialogueParticipantConfig
+    runtime: RuntimeConfig
