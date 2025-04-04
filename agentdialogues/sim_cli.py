@@ -46,22 +46,23 @@ def main() -> None:
             initial_state,
             stream_mode="values",
         ):
-            message = chunk["dialogue"][-1].message.content
-            role = chunk["dialogue"][-1].role
-            participant_name = (
-                config["initiator"]["name"]
-                if role == Roles.INITIATOR
-                else config["responder"]["name"]
-            )
+            if len(chunk["dialogue"]) > 0:
+                message = chunk["dialogue"][-1].message.content
+                role = chunk["dialogue"][-1].role
+                participant_name = (
+                    config["initiator"]["name"]
+                    if role == Roles.INITIATOR
+                    else config["responder"]["name"]
+                )
 
-            console.spinner.stop()
-            console.print_dialogue_message(
-                role=role,
-                participant_name=participant_name,
-                message=str(message),
-                count=len(chunk["dialogue"]),
-            )
-            console.spinner.start()
+                console.spinner.stop()
+                console.print_dialogue_message(
+                    role=role,
+                    participant_name=participant_name,
+                    message=str(message),
+                    count=len(chunk["dialogue"]),
+                )
+                console.spinner.start()
 
             final_state = chunk
 

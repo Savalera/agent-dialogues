@@ -3,6 +3,7 @@
 Baby-Daddy simulation.
 """
 
+from math import floor
 from typing import Any, cast
 
 from langchain_core.messages import BaseMessage, HumanMessage
@@ -29,6 +30,7 @@ class SimulationState(BaseModel):
     """Simulation state."""
 
     dialogue: Dialogue
+    seed_messages: list[DialogueItem]
 
 
 # ⬇ Global runtime constants — set via init_simulation()
@@ -42,24 +44,30 @@ initial_state: SimulationState
 # === Graph nodes and edges ===
 def call_initiator_node(state: SimulationState) -> dict[str, Any]:
     """Call initiator agent."""
-    messages = convert_dialogue_to_chat_messages(
-        human_role=Roles.RESPONDER, dialogue=state.dialogue
-    )
-
-    response = initiator.invoke(
-        {
-            "messages": messages,
-            "system_prompt": simulation_config.initiator.system_prompt,
+    if len(state.seed_messages) > len(state.dialogue) / 2:
+        return {
+            "dialogue": state.dialogue
+            + [state.seed_messages[floor(len(state.dialogue) / 2)]]
         }
-    )
+    else:
+        messages = convert_dialogue_to_chat_messages(
+            human_role=Roles.RESPONDER, dialogue=state.dialogue
+        )
 
-    r = ChatAgentState(**response)
-    message = r.messages[-1]
+        response = initiator.invoke(
+            {
+                "messages": messages,
+                "system_prompt": simulation_config.initiator.system_prompt,
+            }
+        )
 
-    return {
-        "dialogue": state.dialogue
-        + [DialogueItem(role=Roles.INITIATOR, message=message)]
-    }
+        r = ChatAgentState(**response)
+        message = r.messages[-1]
+
+        return {
+            "dialogue": state.dialogue
+            + [DialogueItem(role=Roles.INITIATOR, message=message)]
+        }
 
 
 def call_responder_node(state: SimulationState) -> dict[str, Any]:
@@ -95,19 +103,19 @@ def should_continue(state: SimulationState) -> str:
 
 # === Graph builder ===
 workflow = StateGraph(SimulationState)
-workflow.add_node("initiator_node", call_initiator_node)
-workflow.add_node("responder_node", call_responder_node)
+workflow.add_node("initiator", call_initiator_node)
+workflow.add_node("responder", call_responder_node)
 
-workflow.add_edge(START, "responder_node")
+workflow.add_edge(START, "initiator")
 workflow.add_conditional_edges(
-    "responder_node",
+    "responder",
     should_continue,
     {
         "end": END,
-        "continue": "initiator_node",
+        "continue": "initiator",
     },
 )
-workflow.add_edge("initiator_node", "responder_node")
+workflow.add_edge("initiator", "responder")
 graph = workflow.compile()
 
 
@@ -138,15 +146,17 @@ def create_simulation(config: dict[str, Any]) -> Simulation:
         }
     )
 
-    dialogue = [
+    seed_messages = [
         DialogueItem(
             role=Roles.INITIATOR,
-            message=HumanMessage(content=simulation_config.initiator.messages[0]),
+            message=HumanMessage(content=msg),
         )
+        for msg in simulation_config.initiator.messages
     ]
 
     initial_state = SimulationState(
-        dialogue=dialogue,
+        dialogue=[],
+        seed_messages=seed_messages,
     )
 
     return graph
