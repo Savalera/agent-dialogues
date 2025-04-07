@@ -41,8 +41,6 @@ class AgentState(BaseModel):
     config: Optional[AgentConfig] = None
     runtime: Optional[Runtime] = None
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
 
 # === Graph nodes and edges ===
 def setup_node(state: AgentState) -> dict[str, Any]:

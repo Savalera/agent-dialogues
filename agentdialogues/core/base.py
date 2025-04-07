@@ -1,7 +1,7 @@
 """Agent Dialogues domain objects."""
 
 from enum import Enum
-from typing import Any, Literal, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, PositiveInt
 
@@ -118,3 +118,4 @@ class DialogueSimulationConfig(BaseSimulationConfig):
     initiator: DialogueParticipantWithMessagesConfig
     responder: DialogueParticipantConfig
     runtime: RuntimeConfig
+    evaluation: Optional[dict[str, Any]] = {}

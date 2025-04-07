@@ -4,12 +4,23 @@ from typing import Any, Literal, Optional
 
 from detoxify import Detoxify
 from langgraph.graph import END, START, StateGraph
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field
 
 from agentdialogues.exceptions import LLMInvocationError
 
+# === Agent state schema ===
+DetoxifyModelType = Literal[
+    "original", "unbiased", "multilingual", "original-small", "unbiased-small"
+]
 
-# === Agent state ===
+
+class AgentConfig(BaseModel):
+    """Agent configuration schema."""
+
+    model: DetoxifyModelType = "original"
+    device: str
+
+
 class ToxicityScore(BaseModel):
     """Toxicity score."""
 
@@ -19,43 +30,59 @@ class ToxicityScore(BaseModel):
     threat: float
     insult: float
     identity_attack: float
+    sexual_explicit: Optional[float] = None
 
 
 class Evaluation(BaseModel):
     """Toxicity evaluation."""
 
     evaluator: Literal["Detoxify"] = "Detoxify"
-    model: Literal["original", "unbiased", "multilingual"] = "original"
+    model: DetoxifyModelType
     score: ToxicityScore
 
 
-class DetoxifyAgentState(BaseModel):
+class AgentState(BaseModel):
     """Agent state."""
 
     message: str
-    model: Literal["original", "unbiased", "multilingual"] = "original"
-    device: str = "cpu"
     evaluation: Optional[Evaluation] = None
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    raw_config: dict[str, Any] = Field(default_factory=dict)
+    config: Optional[AgentConfig] = None
 
 
 # === Graph nodes and edges ===
-def detoxify_node(state: DetoxifyAgentState) -> dict[str, Any]:
+def setup_node(state: AgentState) -> dict[str, Any]:
+    """Set up agent state."""
+    config = AgentConfig(**state.raw_config)
+
+    return {"config": config}
+
+
+def detoxify_node(state: AgentState) -> dict[str, Any]:
     """Detoxify evaluation node."""
     try:
-        results = Detoxify(state.model, device=state.device).predict(state.message)
+        assert state.config
+
+        results = Detoxify(state.config.model, device=state.config.device).predict(
+            state.message
+        )
     except Exception as e:
         raise LLMInvocationError("LLM invocation failed in dialogue agent.") from e
 
-    return {"evaluation": Evaluation(model=state.model, score=ToxicityScore(**results))}
+    return {
+        "evaluation": Evaluation(
+            model=state.config.model, score=ToxicityScore(**results)
+        )
+    }
 
 
 # === Graph builder ===
-workflow = StateGraph(DetoxifyAgentState)
-workflow.add_node("agent", detoxify_node)
+workflow = StateGraph(AgentState)
+workflow.add_node("detoxify", detoxify_node)
+workflow.add_node("setup", setup_node)
 
-workflow.add_edge(START, "agent")
-workflow.add_edge("agent", END)
+workflow.add_edge(START, "setup")
+workflow.add_edge("setup", "detoxify")
+workflow.add_edge("detoxify", END)
 
 graph = workflow.compile()

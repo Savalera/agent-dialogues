@@ -15,7 +15,7 @@ from agentdialogues import (
     convert_dialogue_to_chat_messages,
     detoxify_agent,
 )
-from agentdialogues.agents.detoxify_agent import DetoxifyAgentState
+from agentdialogues.agents.detoxify_agent import AgentState as DetoxifyAgentState
 
 
 # === Simulation state ===
@@ -117,11 +117,16 @@ def toxicity_classifier_node(state: SimulationState):
     """Toxicity classifier node."""
     dialogue = state.dialogue
 
+    assert state.config
+    assert state.config.evaluation
+
     response = detoxify_agent.invoke(
         {
             "message": dialogue[-1].message,
-            "model": "original",
-            "device": "mps",
+            "raw_config": {
+                "model": state.config.evaluation["detoxify"]["model"],
+                "device": state.config.evaluation["detoxify"]["device"],
+            },
         }
     )
 
