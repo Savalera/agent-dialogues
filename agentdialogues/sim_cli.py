@@ -32,9 +32,14 @@ def main() -> None:
         simulation_module_path = args.sim
         simulation_config_path = args.config
 
-        app, initial_state, config = bootstrap_simulation(
+        app, config = bootstrap_simulation(
             simulation_module_path, simulation_config_path
         )
+
+        initial_state = {
+            "dialogue": [],
+            "raw_config": config,
+        }
 
         console = SimulationPrinter(
             total_steps=config["runtime"]["rounds"] * 2, sim_name=config["name"]
@@ -47,8 +52,11 @@ def main() -> None:
             stream_mode="values",
         ):
             if len(chunk["dialogue"]) > 0:
-                message = chunk["dialogue"][-1].message.content
-                role = chunk["dialogue"][-1].role
+                last_message = chunk["dialogue"][-1]
+                role = last_message.role
+                message = last_message.message
+                meta = getattr(last_message, "meta", None)
+
                 participant_name = (
                     config["initiator"]["name"]
                     if role == Roles.INITIATOR
@@ -60,6 +68,7 @@ def main() -> None:
                     role=role,
                     participant_name=participant_name,
                     message=str(message),
+                    meta=meta,
                     count=len(chunk["dialogue"]),
                 )
                 console.spinner.start()
@@ -81,7 +90,8 @@ def main() -> None:
                             if item.role == Roles.INITIATOR
                             else config["responder"]["name"]
                         ),
-                        "message": item.message.content,
+                        "message": item.message,
+                        "meta": getattr(item, "meta", None),
                     }
                     for item in final_state["dialogue"]
                 ],

@@ -13,13 +13,10 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 
 from agentdialogues import (
-    ChatAgent,
-    ChatAgentState,
     Dialogue,
     DialogueItem,
     DialogueSimulationConfig,
     Roles,
-    Simulation,
     convert_dialogue_to_chat_messages,
     create_chat_agent,
 )
@@ -30,7 +27,7 @@ class SimulationState(BaseModel):
     """Simulation state."""
 
     dialogue: Dialogue
-    seed_messages: list[DialogueItem]
+    seed_messages: list[DialogueItem] = []
 
 
 # ⬇ Global runtime constants — set via init_simulation()

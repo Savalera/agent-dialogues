@@ -16,8 +16,8 @@ def convert_dialogue_to_chat_messages(
         message = dialogue_item.message
 
         if role == human_role:
-            results.append(HumanMessage(message.content))
+            results.append(HumanMessage(message))
         else:
-            results.append(AIMessage(message.content))
+            results.append(AIMessage(message))
 
     return results

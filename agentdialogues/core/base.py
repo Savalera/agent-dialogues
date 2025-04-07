@@ -1,13 +1,9 @@
 """Agent Dialogues domain objects."""
 
 from enum import Enum
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
-from langchain_core.messages import AnyMessage
-from langgraph.graph.state import CompiledStateGraph
-from pydantic import BaseModel, ConfigDict, PositiveInt
-
-Simulation = CompiledStateGraph
+from pydantic import BaseModel, PositiveInt
 
 
 # === Constants ===
@@ -28,14 +24,21 @@ class Roles(str, Enum):
     RESPONDER = "responder"
 
 
+class ChatProviders(str, Enum):
+    """Defines available chat providers."""
+
+    OLLAMA = "Ollama"
+    HFAPI = "HFApi"
+    HUGGINGFACE = "Huggingface"
+
+
 # === Domain ===
 class DialogueItem(BaseModel):
     """Dialogue item."""
 
     role: Roles
-    message: AnyMessage
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    message: str
+    meta: Optional[list[dict[str, Any]]] = None
 
 
 Dialogue = list[DialogueItem]
@@ -63,7 +66,7 @@ class ChatModelConfig(BaseModel):
     """Chat model config."""
 
     model_name: str
-    provider: Literal["Ollama", "HuggingFace", "HFApi"]
+    provider: ChatProviders
 
 
 class RuntimeConfig(BaseModel):

@@ -1,6 +1,6 @@
 """Chat agent."""
 
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 from langchain_core.messages import (
     AnyMessage,
@@ -8,47 +8,65 @@ from langchain_core.messages import (
     SystemMessage,
 )
 from langchain_core.runnables.base import Runnable
+from langchain_ollama import ChatOllama
 from langgraph.graph import END, START, StateGraph
-from langgraph.graph.state import CompiledStateGraph
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
+from agentdialogues.core.base import ChatProviders
 from agentdialogues.exceptions import LLMInvocationError
 
-# ⬇ Global runtime constants — set via init_agent)
-llm: Runnable[list[BaseMessage], list[BaseMessage]]
+
+# === Agent state schema ===
+class AgentConfig(BaseModel):
+    """Agent configuration schema."""
+
+    model_name: str
+    provider: ChatProviders = Field(default=ChatProviders.OLLAMA)
 
 
-# === Agent schema ===
-ChatAgent = CompiledStateGraph
-
-
-class ChatAgentConfig(BaseModel):
-    """Chat agent configuration."""
+class Runtime(BaseModel):
+    """Agent runtime configuration."""
 
     llm: Runnable[list[BaseMessage], list[BaseMessage]]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-# === Agent state ===
-class ChatAgentState(BaseModel):
+class AgentState(BaseModel):
     """Chat state."""
 
-    messages: list[AnyMessage]
-    system_prompt: str
+    messages: list[AnyMessage] = []
+    system_prompt: str = ""
+    raw_config: dict[str, Any] = Field(default_factory=dict)
+    config: Optional[AgentConfig] = None
+    runtime: Optional[Runtime] = None
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 # === Graph nodes and edges ===
-def chat_node(state: ChatAgentState) -> dict[str, Any]:
+def setup_node(state: AgentState) -> dict[str, Any]:
+    """Set up agent state."""
+    config = AgentConfig(**state.raw_config)
+
+    llm = cast(
+        Runnable[list[BaseMessage], list[BaseMessage]],
+        ChatOllama(model=config.model_name),
+    )
+
+    return {"config": config, "runtime": {"llm": llm}}
+
+
+def chat_node(state: AgentState) -> dict[str, Any]:
     """Dialogue chat node."""
-    global llm
+    assert state.runtime
 
     system = SystemMessage(state.system_prompt)
 
     try:
-        response = llm.invoke([system] + cast(list[BaseMessage], state.messages))
+        response = state.runtime.llm.invoke(
+            [system] + cast(list[BaseMessage], state.messages)
+        )
     except Exception as e:
         raise LLMInvocationError("LLM invocation failed in dialogue agent.") from e
 
@@ -56,21 +74,12 @@ def chat_node(state: ChatAgentState) -> dict[str, Any]:
 
 
 # === Graph builder ===
-workflow = StateGraph(ChatAgentState)
-workflow.add_node("agent", chat_node)
+workflow = StateGraph(AgentState)
+workflow.add_node("setup", setup_node)
+workflow.add_node("chat", chat_node)
 
-workflow.add_edge(START, "agent")
-workflow.add_edge("agent", END)
+workflow.add_edge(START, "setup")
+workflow.add_edge("setup", "chat")
+workflow.add_edge("chat", END)
 
 graph = workflow.compile()
-
-
-# === Agent creator ===
-def create_chat_agent(config: dict[str, Any]) -> ChatAgent:
-    """Create chat agent."""
-    global llm
-
-    agent_config = ChatAgentConfig(**config)
-    llm = agent_config.llm
-
-    return graph
