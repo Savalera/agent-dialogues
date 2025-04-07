@@ -31,6 +31,7 @@ def main() -> None:
 
         simulation_module_path = args.sim
         simulation_config_path = args.config
+        batch_runs = args.batch
 
         app, config = bootstrap_simulation(
             simulation_module_path, simulation_config_path
@@ -41,65 +42,77 @@ def main() -> None:
             "raw_config": config,
         }
 
+        start_time = datetime.datetime.now()
+
         console = SimulationPrinter(
-            total_steps=config["runtime"]["rounds"] * 2, sim_name=config["name"]
+            total_steps=config["runtime"]["rounds"] * 2,
+            sim_name=config["name"],
+            start_time=start_time,
+            batch_mode=batch_runs > 1,
+            batch_runs=batch_runs,
+            debug=False,
         )
 
+        console.print_title()
         console.spinner.start()
 
-        for chunk in app.stream(
-            initial_state,
-            stream_mode="values",
-        ):
-            if len(chunk["dialogue"]) > 0:
-                last_message = chunk["dialogue"][-1]
-                role = last_message.role
-                message = last_message.message
-                meta = getattr(last_message, "meta", None)
+        for batch_count in range(batch_runs):
 
-                participant_name = (
-                    config["initiator"]["name"]
-                    if role == Roles.INITIATOR
-                    else config["responder"]["name"]
-                )
+            if batch_runs > 1:
+                console.print_batch_status(batch_count=batch_count + 1)
 
-                console.spinner.stop()
-                console.print_dialogue_message(
-                    role=role,
-                    participant_name=participant_name,
-                    message=str(message),
-                    meta=meta,
-                    count=len(chunk["dialogue"]),
-                )
-                console.spinner.start()
+            for chunk in app.stream(
+                initial_state,
+                stream_mode="values",
+            ):
+                if len(chunk["dialogue"]) > 0:
+                    last_message = chunk["dialogue"][-1]
+                    role = last_message.role
+                    message = last_message.message
+                    meta = getattr(last_message, "meta", None)
 
-            final_state = chunk
+                    participant_name = (
+                        config["initiator"]["name"]
+                        if role == Roles.INITIATOR
+                        else config["responder"]["name"]
+                    )
 
-        if final_state:
-            chat_id = datetime.datetime.now().isoformat()
-            chat_log = {
-                "chat_id": chat_id,
-                Roles.INITIATOR: config["initiator"],
-                Roles.RESPONDER: config["responder"],
-                "runtime": config["runtime"],
-                "dialogue": [
-                    {
-                        "role": item.role,
-                        "name": (
-                            config["initiator"]["name"]
-                            if item.role == Roles.INITIATOR
-                            else config["responder"]["name"]
-                        ),
-                        "message": item.message,
-                        "meta": getattr(item, "meta", None),
-                    }
-                    for item in final_state["dialogue"]
-                ],
-            }
+                    console.spinner.stop()
+                    console.print_dialogue_message(
+                        role=role,
+                        participant_name=participant_name,
+                        message=str(message),
+                        meta=meta,
+                        count=len(chunk["dialogue"]),
+                    )
+                    console.spinner.start()
 
-            log_path = log_dir / f"chat_log_{chat_id}.json"
-            with log_path.open("w", encoding="utf-8") as f:
-                json.dump(chat_log, f, indent=4)
+                final_state = chunk
+
+            if final_state:
+                chat_id = datetime.datetime.now().isoformat()
+                chat_log = {
+                    "chat_id": chat_id,
+                    "batch_id": start_time.isoformat() if batch_runs > 1 else "n/a",
+                    "simulation_config": config,
+                    "dialogue": [
+                        {
+                            "role": item.role,
+                            "name": (
+                                config["initiator"]["name"]
+                                if item.role == Roles.INITIATOR
+                                else config["responder"]["name"]
+                            ),
+                            "message": item.message,
+                            "meta": getattr(item, "meta", None),
+                        }
+                        for item in final_state["dialogue"]
+                    ],
+                }
+
+                log_path = log_dir / f"chat_log_{chat_id}.json"
+                with log_path.open("w", encoding="utf-8") as f:
+                    json.dump(chat_log, f, indent=4)
 
     except SimulationError as e:
         if console:

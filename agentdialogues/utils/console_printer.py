@@ -34,28 +34,60 @@ role_style = {
 class SimulationPrinter:
     """Simulation printer."""
 
-    def __init__(self, total_steps: int, sim_name: str):
+    def __init__(
+        self,
+        total_steps: int,
+        sim_name: str,
+        start_time: datetime.date,
+        batch_mode: bool,
+        batch_runs: int,
+        debug: bool = False,
+    ):
         """Create simulation printer."""
         self.total = total_steps
         self.sim_name = sim_name
         self.console = Console()
-
-        title = Text.from_markup(
-            f"[{SAVALERA_LIGHT_YELLOW}]{ascii_title}[/{SAVALERA_LIGHT_YELLOW}]"
-            + f"[{SAVALERA_LIGHT_BLUE}]Agentic Lab[/{SAVALERA_LIGHT_BLUE}] - Agent Dialogue Simulation\n[bold cyan]Running simulation [{SAVALERA_PURPLE}]`{self.sim_name}`[/{SAVALERA_PURPLE}] with [{SAVALERA_YELLOW}]{self.total}[/{SAVALERA_YELLOW}] steps."
-        )
-        self.console.print(title)
-
-        status_header = self.make_heading("Job Info", SAVALERA_LIGHT_YELLOW)
-        job_info = self.make_job_info()
-        self.console.print(status_header)
-        self.console.print(job_info)
+        self.start_time = start_time
+        self.batch_mode = batch_mode
+        self.batch_runs = batch_runs
+        self.debug = debug
 
         self.spinner = self.console.status(
             f"[{SAVALERA_LIGHT_YELLOW}]Running simulation...",
             spinner="dots",
             spinner_style=f"{SAVALERA_YELLOW}",
         )
+
+    def print_title(self) -> None:
+        """Print job title."""
+        title = Text.from_markup(
+            f"[{SAVALERA_LIGHT_YELLOW}]{ascii_title}[/{SAVALERA_LIGHT_YELLOW}]"
+            + f"[{SAVALERA_LIGHT_BLUE}]Agentic Lab[/{SAVALERA_LIGHT_BLUE}] - Agent Dialogue Simulation\n[bold cyan]Running simulation [{SAVALERA_PURPLE}]`{self.sim_name}`[/{SAVALERA_PURPLE}] with [{SAVALERA_YELLOW}]{self.total}[/{SAVALERA_YELLOW}] steps."
+        )
+        self.console.print(title)
+
+        status_header = self.make_heading("Job info", SAVALERA_LIGHT_YELLOW)
+        job_info = self.make_job_info()
+        self.console.print(status_header)
+        self.console.print(job_info)
+
+    def make_job_info(self) -> Table:
+        """Print status message."""
+        table = Table.grid(padding=(0, 1))
+        table.add_column(justify="right", style="bold cyan")
+        table.add_column()
+
+        table.add_row(
+            "Start time", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        table.add_row("Simulation", self.sim_name)
+        table.add_row("Batch mode", str(self.batch_mode))
+        table.add_row("Total runs", str(self.batch_runs))
+        table.add_row("Rounds per run", str(self.total))
+        table.add_row("Output dir", "./logs/")
+        table.add_row("Debug", str(self.debug))
+
+        return table
 
     def make_heading(self, text: str, style: str) -> Text:
         """Print header line."""
@@ -85,20 +117,10 @@ class SimulationPrinter:
         if meta is not None:
             self.console.print(meta, style="dim")
 
-    def make_job_info(self, batch_mode: bool = False) -> Table:
-        """Print status message."""
-        table = Table.grid(padding=(0, 1))
-        table.add_column(justify="right", style="bold cyan")
-        table.add_column()
+    def print_batch_status(self, batch_count: int) -> None:
+        """Print batch run status update."""
+        heading = self.make_heading("Batch progress", SAVALERA_LIGHT_YELLOW)
+        info = Text(f"Running batch {batch_count}/{self.total}...")
 
-        table.add_row(
-            "Start time", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
-        table.add_row("Simulation", self.sim_name)
-        table.add_row("Batch mode", str(batch_mode))
-        table.add_row("Rounds per run", str(self.total))
-        table.add_row("Total runs", str(1))
-        table.add_row("Output dir", "./logs/")
-        table.add_row("Debug", "False")
-
-        return table
+        self.console.print(heading)
+        self.console.print(info)

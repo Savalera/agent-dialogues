@@ -20,7 +20,12 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="Name of the scenario sim file to load from the `sims` directory (e.g. 'baby-daddy')",
     )
-
+    parser.add_argument(
+        "--batch",
+        type=int,
+        default=1,
+        help="Run in batch mode with N repetitions. 0 means run once interactively.",
+    )
     try:
         return parser.parse_args()
     except SystemExit as e:
