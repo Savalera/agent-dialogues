@@ -45,6 +45,7 @@ def main() -> None:
             start_time=start_time,
             batch_mode=batch_runs > 1,
             batch_runs=batch_runs,
+            output_dir=config["id"],
             debug=False,
         )
 

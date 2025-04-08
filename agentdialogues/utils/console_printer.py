@@ -41,6 +41,7 @@ class SimulationPrinter:
         start_time: datetime.date,
         batch_mode: bool,
         batch_runs: int,
+        output_dir: str,
         debug: bool = False,
     ):
         """Create simulation printer."""
@@ -51,6 +52,7 @@ class SimulationPrinter:
         self.batch_mode = batch_mode
         self.batch_runs = batch_runs
         self.debug = debug
+        self.output_dir = output_dir
 
         self.spinner = self.console.status(
             f"[{SAVALERA_LIGHT_YELLOW}]Running simulation...",
@@ -84,7 +86,7 @@ class SimulationPrinter:
         table.add_row("Batch mode", str(self.batch_mode))
         table.add_row("Total runs", str(self.batch_runs))
         table.add_row("Rounds per run", str(self.total))
-        table.add_row("Output dir", "./logs/")
+        table.add_row("Output dir", f"./logs/{self.output_dir}")
         table.add_row("Debug", str(self.debug))
 
         return table

@@ -102,7 +102,7 @@ class DialogueParticipantWithMessagesConfig(DialogueParticipantConfig):
         initial_message: The message that starts the dialogue.
     """
 
-    messages: list[str]
+    messages: Optional[list[str]] = []
 
 
 class DialogueSimulationConfig(BaseSimulationConfig):
