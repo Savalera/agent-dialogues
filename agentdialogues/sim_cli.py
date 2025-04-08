@@ -121,7 +121,10 @@ def main() -> None:
                     ],
                 }
 
-                log_path = log_dir / f"chat_log_{chat_id}.json"
+                simulation_dir = log_dir / Path(config["id"])
+                simulation_dir.mkdir(parents=True, exist_ok=True)
+
+                log_path = simulation_dir / f"log_{chat_id}.json"
                 with log_path.open("w", encoding="utf-8") as f:
                     json.dump(chat_log, f, indent=4)
 
