@@ -85,7 +85,7 @@ class SimulationPrinter:
         table.add_row("Simulation", self.sim_name)
         table.add_row("Batch mode", str(self.batch_mode))
         table.add_row("Total runs", str(self.batch_runs))
-        table.add_row("Rounds per run", str(self.total))
+        table.add_row("Rounds per run", str(self.total / 2))
         table.add_row("Output dir", f"./logs/{self.output_dir}")
         table.add_row("Debug", str(self.debug))
 
@@ -122,7 +122,7 @@ class SimulationPrinter:
     def print_batch_status(self, batch_count: int) -> None:
         """Print batch run status update."""
         heading = self.make_heading("Batch progress", SAVALERA_LIGHT_YELLOW)
-        info = Text(f"Running batch {batch_count}/{self.total}...")
+        info = Text(f"Running batch {batch_count}/{self.batch_runs}...")
 
         self.console.print(heading)
         self.console.print(info)

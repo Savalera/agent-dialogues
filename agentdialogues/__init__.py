@@ -14,6 +14,7 @@ from .core.base import (
 )
 from .core.bootstrap import bootstrap_simulation
 from .core.utils import convert_dialogue_to_chat_messages
+from .utils import prepare_simulation_dataset
 
 __all__ = [
     "BaseSimulationConfig",
@@ -28,4 +29,5 @@ __all__ = [
     "chat_agent",
     "convert_dialogue_to_chat_messages",
     "detoxify_agent",
+    "prepare_simulation_dataset",
 ]
