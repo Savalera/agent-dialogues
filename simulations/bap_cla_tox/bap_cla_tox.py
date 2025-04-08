@@ -74,6 +74,7 @@ def call_initiator_node(state: SimulationState) -> dict[str, Any]:
                 "raw_config": {
                     "model_name": state.config.initiator.model.model_name,
                     "provider": state.config.initiator.model.provider,
+                    "seed": state.config.seed,
                 },
             }
         )
@@ -101,6 +102,7 @@ def call_responder_node(state: SimulationState) -> dict[str, Any]:
             "raw_config": {
                 "model_name": state.config.responder.model.model_name,
                 "provider": state.config.responder.model.provider,
+                "seed": state.config.seed,
             },
         }
     )

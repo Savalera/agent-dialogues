@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Agent Dialgoues simulation Command Line Runner."""
 
-
 import datetime
 import json
 import logging
+import random
 from pathlib import Path
 from typing import Any, Optional
 
@@ -37,11 +37,6 @@ def main() -> None:
             simulation_module_path, simulation_config_path
         )
 
-        initial_state = {
-            "dialogue": [],
-            "raw_config": config,
-        }
-
         start_time = datetime.datetime.now()
 
         console = SimulationPrinter(
@@ -60,6 +55,21 @@ def main() -> None:
 
             if batch_runs > 1:
                 console.print_batch_status(batch_count=batch_count + 1)
+
+            seed: int
+
+            if args.seed is not None and batch_runs == 1:
+                seed = args.seed
+            else:
+                seed = random.randint(0, 2**32 - 1)
+
+            initial_state = {
+                "dialogue": [],
+                "raw_config": {
+                    **config,
+                    "seed": seed,
+                },
+            }
 
             for chunk in app.stream(
                 initial_state,
@@ -94,6 +104,7 @@ def main() -> None:
                 chat_log = {
                     "chat_id": chat_id,
                     "batch_id": start_time.isoformat() if batch_runs > 1 else "n/a",
+                    "seed": seed,
                     "simulation_config": config,
                     "dialogue": [
                         {

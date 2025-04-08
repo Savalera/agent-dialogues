@@ -26,6 +26,12 @@ def parse_args() -> argparse.Namespace:
         default=1,
         help="Run in batch mode with N repetitions. 0 means run once interactively.",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        help="Random seed for reproducibility. (Only applied when not in batch mode.)",
+    )
+
     try:
         return parser.parse_args()
     except SystemExit as e:

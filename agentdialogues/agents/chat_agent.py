@@ -22,6 +22,7 @@ class AgentConfig(BaseModel):
 
     model_name: str
     provider: ChatProviders = Field(default=ChatProviders.OLLAMA)
+    seed: int
 
 
 class Runtime(BaseModel):
@@ -49,7 +50,7 @@ def setup_node(state: AgentState) -> dict[str, Any]:
 
     llm = cast(
         Runnable[list[BaseMessage], list[BaseMessage]],
-        ChatOllama(model=config.model_name),
+        ChatOllama(model=config.model_name, seed=config.seed),
     )
 
     return {"config": config, "runtime": {"llm": llm}}

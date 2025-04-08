@@ -55,11 +55,12 @@ class BaseSimulationConfig(BaseModel):
     Attributes:
         id: Unique simulation ID.
         name: Name for display and logs.
-        rounds: Number of dialogue rounds (must be > 0).
+        seed: Random seed to be used in the simulation.
     """
 
     id: str
     name: str
+    seed: int
 
 
 class ChatModelConfig(BaseModel):
