@@ -74,6 +74,7 @@ def main() -> None:
 
             for chunk in app.stream(
                 initial_state,
+                config={"recursion_limit": 30},
                 stream_mode="values",
             ):
                 if len(chunk["dialogue"]) > 0:

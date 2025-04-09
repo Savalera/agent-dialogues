@@ -12,12 +12,16 @@ console = Console()
 def flatten_dialogue(chat_data):
     """Flatten dialogue."""
     chat_id = chat_data.get("chat_id", "unknown_chat")
+    batch_id = chat_data.get("batch_id", "unknown_batch")
+    seed = chat_data.get("seed", "unknown_seed")
     dialogue = chat_data.get("dialogue", [])
 
     rows = []
     for idx, msg in enumerate(dialogue):
         base = {
             "chat_id": chat_id,
+            "batch_id": batch_id,
+            "seed": seed,
             "round": idx // 2 + 1,
             "role": msg.get("role"),
             "name": msg.get("name"),
