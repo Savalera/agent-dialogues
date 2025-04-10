@@ -6,7 +6,7 @@ authors:
     orcid: https://orcid.org/0009-0000-3156-1765
     affiliation: Savalera Agentic Lab
 title: "Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research"
-version: "0.1.0-alpha.1"
+version: "0.1.0-alpha.2"
 doi: 10.5281/zenodo.15082311
 date-released: 2025-03-25
 url: https://github.com/savalera/agent-dialogues

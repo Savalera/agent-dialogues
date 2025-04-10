@@ -20,10 +20,10 @@ We use Agent Dialogues for simulated conversations to check language model and a
 ### Current features
 
 - Runs a conversation of two participants; `initiator`, and `responder`.
-- Simulation definition in `yaml` file.
+- Simulation scenario definition in `yaml` file.
   - Configurable system prompt per participant.
   - Configurable language model per participant.
-  - Configurable initial messages for both initiator and participant.
+  - Configurable initial messages for both participants.
   - Configurable conversation length (number of rounds).
 - Command line interface.
 - Batch mode.
@@ -36,7 +36,7 @@ We use Agent Dialogues for simulated conversations to check language model and a
 ### Known limitations
 
 - This is an MVP, there is a lot to be added.
-- Local Ollama connectivity is hard-coded for the chat agent.
+- Only local Ollama invocation implemented for chat agent.
 
 ### Planned features
 
@@ -92,19 +92,21 @@ python3 -m agentdialogues.sim_cli \
   --config simulations/bap_chat/scenarios/baby-daddy.yaml \
 ```
 
-## Building a Simulation
+## Building a simulation
 
-To create your own simulation using `agentdialogues`, you need to define a Python module that includes a LangGraph `graph` object at the top level. Simulations live in the `simulations/` directory. You can use `simulations/bap_chat` or `simulations/bap_cla_tox` as reference examples.
+To create your own simulation using `agentdialogues`, you need to define a Python module that creates a LangGraph `graph` object at the top level.
 
-## Requirements for a Simulation Module
+Simulations live in the `simulations/` directory. You can use `simulations/bap_chat` or `simulations/bap_cla_tox` as reference examples.
+
+### Requirements for a simulation module
 
 Your simulation module must define the following:
 
-### 1. `graph`: a compiled LangGraph workflow
+#### 1. `graph`: a compiled LangGraph workflow
 
 This is the object that `agentdialogues` invokes when running the simulation. Use `StateGraph(...)` to build your workflow, then call `.compile()` and assign the result to `graph`.
 
-### 2. Config schema
+#### 2. Config schema
 
 Define a Pydantic model to validate the YAML scenario config. You can:
 
@@ -113,7 +115,7 @@ Define a Pydantic model to validate the YAML scenario config. You can:
 
 This config is passed to your simulation in `state.raw_config: dict[str, Any]`. You are responsible for validating and transforming it in the first node (typically `setup_node`).
 
-### 3. Simulation state
+#### 3. Simulation state
 
 Define a `SimulationState` class using Pydantic. This defines the shape of the state passed between nodes.
 
@@ -133,19 +135,23 @@ class SimulationState(BaseModel):
     runtime: Optional[Runtime] = None
 ```
 
-### Setup node
+#### 4. Setup node
 
 Create a setup_node that:
-• Validates and parses the `raw_config`.
-• Calculates runtime constants (e.g. MAX_MESSAGES).
-• Optionally injects other objects (e.g. model seeds, loaded tools) into state.
 
-### Build your graph
+- Validates and parses the `raw_config`.
+- Calculates runtime constants (e.g. `MAX_MESSAGES`).
+- Optionally injects other objects (e.g. model seeds, loaded tools) into state.
+
+#### 5. Build your graph
 
 Use LangGraph primitives to define your workflow:
-• Add your nodes with add_node(...).
-• Route control flow with add_edge(...) and add_conditional_edges(...).
-• Start and end with the START and END symbols.
+
+- Add your nodes with `add_node(...)`.
+- Route control flow with `add_edge(...)` and `add_conditional_edges(...)`.
+- Start and end with the `START` and `END` symbols.
+
+Example:
 
 ```python
 workflow = StateGraph(SimulationState)
@@ -169,9 +175,9 @@ graph = workflow.compile()
 
 Every simulation can support multiple scenarios. These are variations of the same workflow with different config parameters.
 
-Scenarios are defined in YAML under the simulation’s scenarios/ directory.
+Scenarios are defined in YAML under the simulation’s `scenarios/` directory.
 
-You run a specific scenario using the command line:
+You run a specific scenario using the command line, for example:
 
 ```bash
 uv run -m agentdialogues.sim_cli \
@@ -179,12 +185,12 @@ uv run -m agentdialogues.sim_cli \
   --config simulations/my_simulation/scenarios/variant-01.yaml
 ```
 
-The --sim argument points to the simulation module (must expose a graph variable).
-The --config argument provides the scenario YAML file.
+The `--sim` argument points to the simulation module (must expose a graph variable).
+The `--config` argument provides the scenario YAML file.
 
 ### Batch runs
 
-You can repeat the same simulation scenario multiple times using the --batch argument:
+You can repeat the same simulation scenario multiple times using the `--batch` argument:
 
 ```batch
 uv run -m agentdialogues.sim_cli \
@@ -195,17 +201,12 @@ uv run -m agentdialogues.sim_cli \
 
 Each run will receive a different random seed and generate a separate log file. You can retrieve the seed for each run from the logs to reproduce it later.
 
-### Best practices
+### Simulation examples
 
-    •	Add all dependencies to the state so LangGraph Studio can run your simulation.
-    •	Store unprocessed config as raw_config.
-    •	Store validated config as config.
-    •	Store constants like message limits in runtime.
-    •	Inject all tools/models in the setup node, not at the module level.
+Agent Dialogues comes with two built-in simulation examples:
 
-### Example
-
-See [simulations/bap_chat/bap_chat.py](simulations/bap_chat/bap_chat.py) for an example simulation. It uses chat_agent to simulate a dialogue between two roles.
+- `simulations/bap_chat` - uses chat_agent to simulate a dialogue between two participants.
+- `simulations/bap_cla_tox` - uses chat agent to simulate a dialogue and applies Detoxify toxicity classification on every message.
 
 ## Running Your Simulation in LangGraph Studio
 
@@ -235,30 +236,27 @@ Agent Dialogues includes a set of built-in agents designed to cover common simul
 
 This agent is used for LLM-based conversational turns. It currently supports:
 
-- **Local Ollama** (default and working)
-- **Planned Hugging Face model support**
+- Local Ollama.
+- Planned Hugging Face support.
 
 You can customize the model via the `model_name` and `provider` fields in the simulation config. The agent accepts messages, system prompts, and a seed for reproducibility.
 
 ### 2. `detoxify_agent`
 
-This agent performs **toxicity classification** using the [Detoxify](https://github.com/unitaryai/detoxify) model locally. It requires no external API and supports GPU acceleration via PyTorch.
+This agent performs toxicity classification using the [Detoxify](https://github.com/unitaryai/detoxify) model locally. It requires no external API and supports GPU acceleration via PyTorch.
 
 The [simulations/bap_cla_tox/bap_cla_tox.py](simulations/bap_cla_tox/bap_cla_tox.py) example demonstrates a dialogue simulation where each message is followed by a toxicity classification.
 
-### Example usage
-
-To see both agents in action together, check the simulation at:
-
 ## Core schemas
 
-AgentDialogues revolves around two main data structures:
-• Dialogue — captures the conversation.
-• DialogueSimulationConfig — defines the setup for a full simulation.
+Agent Dialogues revolves around two main data structures:
+
+- `Dialogue` — captures the conversation.
+- `DialogueSimulationConfig` — defines the setup for a full simulation.
 
 ### Dialogue format
 
-A Dialogue is a list of turns between two agents. Each turn is represented as a DialogueItem, which includes:
+A `Dialogue` is a list of turns between two agents. Each turn is represented as a `DialogueItem`, which includes:
 
 ```python
 DialogueItem:
@@ -312,7 +310,7 @@ DialogueParticipantConfig:
   name: str
   role: str
   model:
-    provider: "Ollama" | "HuggingFace" | "HFAPI"
+    provider: "Ollama" | "HuggingFace" | "HFApi"
     model_name: str
   system_prompt: str
 ```
@@ -341,13 +339,10 @@ Optionally, you can define evaluation steps — for example, to run classifiers 
 
 ```yaml
 evaluation:
-  classifiers:
-    - id: bert-toxicity
-      provider: HuggingFace
-      model_name: unitary/toxic-bert
+  detoxify:
+    model: unbiased
+    device: mps
 ```
-
-Each classifier can specify a provider, model, and an ID used to identify its outputs.
 
 ## Data and analytics
 
@@ -378,11 +373,7 @@ doi = {10.5281/zenodo.15082311},
 month = mar,
 title = {{Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research}},
 url = {https://github.com/savalera/agent-dialogues},
-version = {0.1.0-alpha.1},
+version = {0.1.0-alpha.2},
 year = {2025}
 }
-```
-
-```
-
 ```

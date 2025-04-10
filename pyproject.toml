@@ -1,6 +1,6 @@
 [project]
 name = "agentdialogues"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 description = "Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research"
 authors = [
     { name = "Márk Tákacs", email = "mark.takacs@savalera.com" },
