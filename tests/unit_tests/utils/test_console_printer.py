@@ -1,8 +1,6 @@
 import datetime
 from unittest.mock import MagicMock, patch
 
-from rich.text import Text
-
 from agentdialogues.core.base import Roles
 from agentdialogues.utils.console_printer import SimulationPrinter
 
