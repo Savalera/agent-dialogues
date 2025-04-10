@@ -40,7 +40,7 @@ jobs:
       - name: Lint with mypy
         run: |
           uv pip install mypy
-          uv run mypy --strict src/
+          uv run mypy --strict agentdialogues/
       - name: Check README spelling
         uses: codespell-project/actions-codespell@v2
         with:
@@ -50,7 +50,7 @@ jobs:
         uses: codespell-project/actions-codespell@v2
         with:
           ignore_words_file: .codespellignore
-          path: src/
+          path: agentdialogues/
       - name: Run tests with pytest
         run: |
           uv pip install pytest
