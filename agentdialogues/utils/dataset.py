@@ -1,3 +1,5 @@
+"""Simulation dataset manipulation."""
+
 import json
 from pathlib import Path
 

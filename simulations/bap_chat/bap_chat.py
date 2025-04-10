@@ -1,6 +1,6 @@
 """Simulation module example.
 
-Baby-Daddy simulation.
+Chat dialogue with two participants.
 """
 
 from math import floor
@@ -48,6 +48,7 @@ def setup_node(state: SimulationState) -> dict[str, Any]:
 def call_initiator_node(state: SimulationState) -> dict[str, Any]:
     """Call initiator agent."""
     assert state.config
+    assert state.config.initiator.messages
 
     seed_messages = state.config.initiator.messages
 

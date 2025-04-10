@@ -5,92 +5,367 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15082312.svg)](https://doi.org/10.5281/zenodo.15082312)
 
-Runs simulated dialogues between LLM agents via LangGraph.
+**Agent Dialogues** is a framework for running multi-turn simulations between LLM-based agents. It's designed to be extensible by researchers and developers who want to define, run, and analyze dialogue-based interactions.
 
 ## Why do this?
 
-We use it for simulated conversations to check language model and agent behavior, for example:
+We use Agent Dialogues for simulated conversations to check language model and agent behavior, for example:
 
 - Does behavior change over time when chain-prompting with a certain personality?
 - How well is personality preserved over time during a conversation?
-- How well is role-playing preserved over time during a conversation?
+- How well is role-play preserved over time during a conversation?
 
 ## Features
 
-### Current features:
+### Current features
 
 - Runs a conversation of two participants; `initiator`, and `responder`.
 - Simulation definition in `yaml` file.
   - Configurable system prompt per participant.
   - Configurable language model per participant.
-  - Configurable conversation length.
+  - Configurable initial messages for both initiator and participant.
+  - Configurable conversation length (number of rounds).
 - Command line interface.
-- Conversation data collection via log file (`json`).
-
-### Known limitations:
-
-- This is an MVP, there is a lot to be added and generalized.
-- Local Ollama connectivity is hard-coded.
-
-### Planned features:
-
 - Batch mode.
-- Classification of conversation messages for personality traits.
-- Self assessment and adoption mid-conversation.
+- Chat agent with [Ollama](https://github.com/ollama/ollama) support.
+- Toxicity classifier agent with [Detoxify](https://github.com/unitaryai/detoxify).
+- Conversation data collection via log file (in `json`).
+- Log converter to `csv` dataset.
+- Basic data analytics support functions to be used in Notebooks.
 
-## Simulation setup
+### Known limitations
 
-Simulations are defined under the `sims` directory, check `sims/baby-daddy.yaml` for an example.
+- This is an MVP, there is a lot to be added.
+- Local Ollama connectivity is hard-coded for the chat agent.
 
-## How to run
+### Planned features
 
-### Run with `python3` + `pip`
+- Huggingface inference support.
+- Big 5 personality traits evaluation.
+- Sarcasm classifier.
+- Self-assessment mid-conversation.
+- Self-adoption during conversation.
+- Improved data analytics and reporting.
+
+## Structure
+
+The repository is structured as a Python module (`agentdialogues/`) which can be used directly for writing your own simulations.
+
+You can:
+
+- Use the built-in simulation runner (`sim_cli.py`).
+- Write custom simulations in the `simulations/` folder.
+- Import the `agentdialogues` module in your own Python project.
+
+## Installation
 
 ```bash
 # 1. Clone this repo
 git clone https://github.com/savalera/agent-dialogues.git
 cd agent-dialogues
 
-# 2. Create a virtual environment
+# 2. Create a virtual environment (choose one)
+
+# Option A: Use uv (recommended for speed)
+uv venv
+uv pip install -r requirements.txt
+
+# Option B: Use pip
 python3 -m venv .venv
 source .venv/bin/activate
-
-# 3. Install dependencies from `requirements.txt`
 pip install -r requirements.txt
 
-# 4. Add your simulation configuration
-#    Place your config in the `sims/` directory.
-#    See `sims/baby-daddy.yaml` for an example.
+# 3. Create your own simulation
+#    Place your simulation in the `simulations/` directory.
+#    See `simulations/bap_chat/` or `simulations/bap_cla_tox/` for examples.
 
-# 5. Run the simulation
-python3 src/sim_cli.py --sim baby-daddy
+# 4. Run the simulation
+
+# Option A: Using uv
+uv run -m agentdialogues.sim_cli \
+  --sim simulations/bap_chat/bap_chat.py \
+  --config simulations/bap_chat/scenarios/baby-daddy.yaml \
+
+# Option B: Using python
+python3 -m agentdialogues.sim_cli \
+  --sim simulations/bap_chat/bap_chat.py \
+  --config simulations/bap_chat/scenarios/baby-daddy.yaml \
 ```
 
-## Run with `uv`
+## Building a Simulation
+
+To create your own simulation using `agentdialogues`, you need to define a Python module that includes a LangGraph `graph` object at the top level. Simulations live in the `simulations/` directory. You can use `simulations/bap_chat` or `simulations/bap_cla_tox` as reference examples.
+
+## Requirements for a Simulation Module
+
+Your simulation module must define the following:
+
+### 1. `graph`: a compiled LangGraph workflow
+
+This is the object that `agentdialogues` invokes when running the simulation. Use `StateGraph(...)` to build your workflow, then call `.compile()` and assign the result to `graph`.
+
+### 2. Config schema
+
+Define a Pydantic model to validate the YAML scenario config. You can:
+
+- Use `agentdialogues.DialogueSimulationConfig` (recommended), or
+- Create your own Pydantic schema
+
+This config is passed to your simulation in `state.raw_config: dict[str, Any]`. You are responsible for validating and transforming it in the first node (typically `setup_node`).
+
+### 3. Simulation state
+
+Define a `SimulationState` class using Pydantic. This defines the shape of the state passed between nodes.
+
+Best practices:
+
+- Include a `dialogue: Dialogue` field (a list of DialogueItems).
+- Include the raw config, validated config, and runtime fields.
+- Store all runtime dependencies (e.g. Runnables, encoders) in the state so LangGraph Studio can run and inspect your simulation.
+
+State example:
+
+```python
+class SimulationState(BaseModel):
+    dialogue: Dialogue = []
+    raw_config: dict[str, Any] = Field(default_factory=dict)
+    config: Optional[DialogueSimulationConfig] = None
+    runtime: Optional[Runtime] = None
+```
+
+### Setup node
+
+Create a setup_node that:
+• Validates and parses the `raw_config`.
+• Calculates runtime constants (e.g. MAX_MESSAGES).
+• Optionally injects other objects (e.g. model seeds, loaded tools) into state.
+
+### Build your graph
+
+Use LangGraph primitives to define your workflow:
+• Add your nodes with add_node(...).
+• Route control flow with add_edge(...) and add_conditional_edges(...).
+• Start and end with the START and END symbols.
+
+```python
+workflow = StateGraph(SimulationState)
+workflow.add_node("setup", setup_node)
+workflow.add_node("initiator", initiator_node)
+workflow.add_node("responder", responder_node)
+
+workflow.add_edge(START, "setup")
+workflow.add_edge("setup", "initiator")
+workflow.add_edge("initiator", "responder")
+workflow.add_conditional_edges(
+    "responder",
+    should_continue,
+    {"continue": "initiator", "end": END}
+)
+
+graph = workflow.compile()
+```
+
+### Scenarios
+
+Every simulation can support multiple scenarios. These are variations of the same workflow with different config parameters.
+
+Scenarios are defined in YAML under the simulation’s scenarios/ directory.
+
+You run a specific scenario using the command line:
 
 ```bash
-# 1. Clone this repo
-git clone https://github.com/savalera/agent-dialogues.git
-cd agent-dialogues
-
-# 2. Create a virtual environment
-uv venv .venv
-source .venv/bin/activate
-
-# 3. Install dependencies from `pyproject.toml`
-uv pip install -r pyproject.toml
-
-# 4. Add your simulation configuration
-#    Place your config in the `sims/` directory.
-#    See `sims/baby-daddy.yaml` for an example.
-
-# 5. Run the simulation
-uv run src/sim_cli.py --sim baby-daddy
+uv run -m agentdialogues.sim_cli \
+  --sim simulations/my_simulation/main.py \
+  --config simulations/my_simulation/scenarios/variant-01.yaml
 ```
 
-## Output
+The --sim argument points to the simulation module (must expose a graph variable).
+The --config argument provides the scenario YAML file.
 
-The simulation prints the conversation output to the console, and saves a conversation log file under the `logs` directory.
+### Batch runs
+
+You can repeat the same simulation scenario multiple times using the --batch argument:
+
+```batch
+uv run -m agentdialogues.sim_cli \
+  --sim simulations/my_simulation/main.py \
+  --config simulations/my_simulation/scenarios/variant-01.yaml \
+  --batch 50
+```
+
+Each run will receive a different random seed and generate a separate log file. You can retrieve the seed for each run from the logs to reproduce it later.
+
+### Best practices
+
+    •	Add all dependencies to the state so LangGraph Studio can run your simulation.
+    •	Store unprocessed config as raw_config.
+    •	Store validated config as config.
+    •	Store constants like message limits in runtime.
+    •	Inject all tools/models in the setup node, not at the module level.
+
+### Example
+
+See [simulations/bap_chat/bap_chat.py](simulations/bap_chat/bap_chat.py) for an example simulation. It uses chat_agent to simulate a dialogue between two roles.
+
+## Running Your Simulation in LangGraph Studio
+
+To run your simulation interactively in LangGraph Studio, you can register it in the `langgraph.json` file:
+
+```json
+{
+  "bap_chat": "./simulations/bap_chat/bap_chat.py:graph"
+}
+```
+
+The key (bap_chat) is the name of your simulation, and the value is the path to your module followed by :graph, referring to the compiled graph object.
+
+Once registered, you can launch LangGraph Studio with:
+
+```bash
+uv run langgraph dev
+```
+
+For more information on setup and advanced usage, see the [LangGraph Studio documentation](https://langchain-ai.github.io/langgraph/concepts/langgraph_studio/).
+
+## Built-in Agents
+
+Agent Dialogues includes a set of built-in agents designed to cover common simulation use cases:
+
+### 1. `chat_agent`
+
+This agent is used for LLM-based conversational turns. It currently supports:
+
+- **Local Ollama** (default and working)
+- **Planned Hugging Face model support**
+
+You can customize the model via the `model_name` and `provider` fields in the simulation config. The agent accepts messages, system prompts, and a seed for reproducibility.
+
+### 2. `detoxify_agent`
+
+This agent performs **toxicity classification** using the [Detoxify](https://github.com/unitaryai/detoxify) model locally. It requires no external API and supports GPU acceleration via PyTorch.
+
+The [simulations/bap_cla_tox/bap_cla_tox.py](simulations/bap_cla_tox/bap_cla_tox.py) example demonstrates a dialogue simulation where each message is followed by a toxicity classification.
+
+### Example usage
+
+To see both agents in action together, check the simulation at:
+
+## Core schemas
+
+AgentDialogues revolves around two main data structures:
+• Dialogue — captures the conversation.
+• DialogueSimulationConfig — defines the setup for a full simulation.
+
+### Dialogue format
+
+A Dialogue is a list of turns between two agents. Each turn is represented as a DialogueItem, which includes:
+
+```python
+DialogueItem:
+  role: Roles # either "initiator" or "responder"
+  message: str
+  meta: Optional[list[dict[str, Any]]]
+```
+
+The meta field can be used to store arbitrary structured annotations, such as evaluation results or classifier outputs.
+
+Example:
+
+```json
+[
+  {
+    "role": "initiator",
+    "message": "What is love?",
+    "meta": [{ "toxicity": 0.01 }]
+  },
+  {
+    "role": "responder",
+    "message": "Love is a deep emotional connection.",
+    "meta": [{ "toxicity": 0.01 }]
+  }
+]
+```
+
+### DialogueSimulationConfig
+
+This schema defines the full setup for a simulation and is used to validate the scenario YAML file. It ensures consistency in how agents and their behavior are configured.
+
+```python
+DialogueSimulationConfig:
+  id: str                      # Unique simulation ID
+  name: str                    # Human-readable name for logs/UI
+  seed: int                    # Global seed for reproducibility
+
+  initiator: DialogueParticipantWithMessagesConfig
+  responder: DialogueParticipantConfig
+
+  runtime: RuntimeConfig
+  evaluation: Optional[dict[str, Any]]
+```
+
+#### Agent definitions
+
+Both participants use a similar schema to define their behavior and models:
+
+```python
+DialogueParticipantConfig:
+  name: str
+  role: str
+  model:
+    provider: "Ollama" | "HuggingFace" | "HFAPI"
+    model_name: str
+  system_prompt: str
+```
+
+For the initiator, you can optionally provide a list of seed messages:
+
+```python
+DialogueParticipantWithMessagesConfig:
+  messages: Optional[list[str]]
+```
+
+These messages are injected during the dialogue, one message per turn. This way you can seed messages in several turns into a simulation.
+
+#### Runtime settings
+
+The number of dialogue turns is specified in the runtime block:
+
+```python
+RuntimeConfig:
+  rounds: int  # number of dialogue rounds (initiator+responder = 2x)
+```
+
+#### Evaluation settings
+
+Optionally, you can define evaluation steps — for example, to run classifiers on messages.
+
+```yaml
+evaluation:
+  classifiers:
+    - id: bert-toxicity
+      provider: HuggingFace
+      model_name: unitary/toxic-bert
+```
+
+Each classifier can specify a provider, model, and an ID used to identify its outputs.
+
+## Data and analytics
+
+Simulation runs are automatically logged under the `logs/` directory.
+
+Each scenario has its own subfolder, and each individual run is saved as a separate `.json` file.
+
+To analyze results across multiple runs, use the built-in aggregation script:
+
+```bash
+python3 -m agentdialogues.aggregate_logs.py --simulation logs/baby-daddy
+```
+
+This creates an aggregated_scores.csv file in the scenario’s log folder, containing flattened data suitable for further analysis.
+
+The project also provides a `/notebooks` directory where you can store and run Jupyter notebooks.
+
+Support for analytics helper functions (e.g., DataFrames, plotting) is planned for future releases.
 
 ## Citation
 
@@ -106,4 +381,8 @@ url = {https://github.com/savalera/agent-dialogues},
 version = {0.1.0-alpha.1},
 year = {2025}
 }
+```
+
+```
+
 ```
