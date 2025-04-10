@@ -1,5 +1,5 @@
 [project]
-name = "agent-dialogues"
+name = "agentdialogues"
 version = "0.1.0-alpha.1"
 description = "Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research"
 authors = [
