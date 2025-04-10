@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from rich.console import Console
@@ -11,7 +12,7 @@ from rich.table import Table
 console = Console()
 
 
-def flatten_dialogue(chat_data):
+def flatten_dialogue(chat_data: dict[str, Any]) -> list[dict[str, Any]]:
     """Flatten dialogue."""
     chat_id = chat_data.get("chat_id", "unknown_chat")
     batch_id = chat_data.get("batch_id", "unknown_batch")
@@ -41,7 +42,7 @@ def flatten_dialogue(chat_data):
     return rows
 
 
-def prepare_simulation_dataset(batch_id: str, logs_base_path: str = "logs"):
+def prepare_simulation_dataset(batch_id: str, logs_base_path: str = "logs") -> None:
     """Process simulation batch logs."""
     input_dir = Path(logs_base_path) / batch_id
     output_file = input_dir / "aggregated_scores.csv"

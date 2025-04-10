@@ -8,7 +8,7 @@ import argparse
 from agentdialogues.utils import prepare_simulation_dataset
 
 
-def main():
+def main() -> None:
     """Entry point for cli."""
     parser = argparse.ArgumentParser(
         description="Aggregate simulation outputs from dialgoue logs."
