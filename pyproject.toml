@@ -1,6 +1,6 @@
 [project]
-name = "agent-dialogues"
-version = "0.1.0-alpha.1"
+name = "agentdialogues"
+version = "0.1.0-alpha.2"
 description = "Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research"
 authors = [
     { name = "Márk Tákacs", email = "mark.takacs@savalera.com" },
@@ -9,42 +9,61 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
 dependencies = [
+    "accelerate>=1.6.0",
     "argparse>=1.4.0",
+    "detoxify>=0.5.2",
+    "jupyterlab>=4.3.6",
     "langchain-ollama>=0.2.3",
     "langgraph>=0.2.6",
-    "mypy>=1.15.0",
+    "matplotlib>=3.9.4",
+    "notebook>=7.3.3",
+    "pandas>=2.2.3",
     "python-dotenv>=1.0.1",
     "rich>=13.9.4",
-    "ruff>=0.9.7",
 ]
 
 [dependency-groups]
 dev = [
-    "langgraph-cli>=0.1.73",
+    "langgraph-cli[inmem]>=0.1.73",
+    "mypy>=1.15.0",
+    "pandas-stubs>=2.2.2.240807",
     "pytest>=8.3.5",
     "pytest-cov>=6.0.0",
+    "ruff>=0.9.7",
+    "types-colorama>=0.4.15.20240311",
+    "types-decorator>=5.2.0.20250324",
+    "types-defusedxml>=0.7.0.20240218",
+    "types-jsonschema>=4.23.0.20241208",
+    "types-pexpect>=4.9.0.20241208",
+    "types-psutil>=7.0.0.20250401",
+    "types-pycurl>=7.45.6.20250309",
+    "types-pygments>=2.19.0.20250305",
     "types-pyyaml>=6.0.12.20250326",
+    "types-requests>=2.32.0.20250328",
 ]
 
 [project.optional-dependencies]
 dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
 
 [tool.mypy]
-mypy_path = "src"
+mypy_path = "."
 explicit_package_bases = true
 
+[[tool.mypy.overrides]]
+module = "detoxify"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["."]
 
 [build-system]
 requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["langgraph.templates.agent", "agent"]
+packages = ["agentdialogues"]
 [tool.setuptools.package-dir]
-"langgraph.templates.agent" = "src/agents"
-"agent" = "src/agents"
+"agentdialogues" = "agentdialogues"
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]

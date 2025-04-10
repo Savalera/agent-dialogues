@@ -1,8 +1,10 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "dialogue_agent": "./src/agents/dialogue_agent.py.py:graph",
-    "simulation_agent": "./src/agents/simulation_agent.py:graph"
+    "chat_agent": "./agentdialogues/agents/chat_agent.py:graph",
+    "detoxify_agent": "./agentdialogues/agents/detoxify_agent.py:graph",
+    "bap_chat": "./simulations/bap_chat/bap_chat.py:graph",
+    "bap_cla_tox": "./simulations/bap_cla_tox/bap_cla_tox.py:graph"
   },
   "env": ".env"
 }
