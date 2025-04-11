@@ -1,28 +1,18 @@
-"""Simulation dataset builder CLI.
-
-Combines scenario logs into one dataset based on the simulation manifest.
-"""
+"""Build simulation dataset from manifest using TOML config."""
 
 import argparse
-import os
 from pathlib import Path
 
 import yaml
-from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
 
 from agentdialogues.analytics.dataset_builder import (
     build_simulation_dataset_from_manifest,
 )
+from agentdialogues.utils.config_loader import load_agentdialogues_config
 
 console = Console()
-
-# Load default directories from .env
-load_dotenv()
-LOGS_DIR = Path(os.getenv("LOGS_DIR", "logs"))
-DATASETS_DIR = Path(os.getenv("DATASETS_DIR", "datasets"))
-SIMULATIONS_DIR = Path(os.getenv("SIMULATIONS_DIR", "simulations"))
 
 
 def print_summary(
@@ -42,7 +32,7 @@ def print_summary(
 
 
 def main() -> None:
-    """Build dataset(s)."""
+    """Build dataset(s) from manifest.yaml."""
     parser = argparse.ArgumentParser(
         description="Build a combined dataset for a simulation using its manifest."
     )
@@ -55,11 +45,18 @@ def main() -> None:
 
     args = parser.parse_args()
     simulation_id = args.sim
-    manifest_path = SIMULATIONS_DIR / simulation_id / "manifest.yaml"
 
+    # Load config from agentdialogues.toml
+    config = load_agentdialogues_config()
+
+    logs_dir = Path(config["paths"]["logs_dir"])
+    datasets_dir = Path(config["paths"]["datasets_dir"])
+    simulations_dir = Path(config["paths"]["simulations_dir"])
+
+    manifest_path = simulations_dir / simulation_id / "manifest.yaml"
     if not manifest_path.exists():
         console.print(
-            f"[red]❌ manifest.yaml not found for simulation: {simulation_id}[/red]"
+            f"[red]manifest.yaml not found for simulation: {simulation_id}[/red]"
         )
         raise SystemExit(1)
 
@@ -67,7 +64,7 @@ def main() -> None:
         manifest = yaml.safe_load(f)
 
     scenario_ids = manifest.get("scenarios")
-    save_individual = manifest["dataset"].get("save_scenario_datasets", False)
+    save_individual = manifest.get("dataset", {}).get("save_scenario_datasets", False)
 
     if not scenario_ids:
         console.print(f"[red]No scenarios defined in {manifest_path}[/red]")
@@ -76,8 +73,8 @@ def main() -> None:
     output_path = build_simulation_dataset_from_manifest(
         simulation_id=simulation_id,
         scenario_ids=scenario_ids,
-        logs_dir=LOGS_DIR,
-        datasets_dir=DATASETS_DIR,
+        logs_dir=logs_dir,
+        datasets_dir=datasets_dir,
         save_scenario_datasets=save_individual,
     )
 
