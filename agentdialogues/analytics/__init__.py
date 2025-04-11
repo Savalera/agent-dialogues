@@ -1,3 +1,3 @@
-from .dataset_builder import prepare_simulation_dataset
+from .dataset_builder import build_simulation_dataset_from_manifest
 
-__all__ = ["prepare_simulation_dataset"]
+__all__ = ["build_simulation_dataset_from_manifest"]
