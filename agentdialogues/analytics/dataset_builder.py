@@ -36,6 +36,10 @@ def flatten_dialogue(
             "message_index": idx,
             "role": msg.get("role"),
             "name": msg.get("name"),
+            "model_name": chat_data.get("simulation_config", {})
+            .get(msg.get("role"), {})
+            .get("model", {})
+            .get("model_name"),
             "message": msg.get("message"),
             "message_length": len(msg.get("message", "")),
         }

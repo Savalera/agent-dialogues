@@ -2,7 +2,7 @@
 
 from .agents.chat_agent import graph as chat_agent
 from .agents.detoxify_agent import graph as detoxify_agent
-from .analytics import build_simulation_dataset_from_manifest
+from .analytics.dataset_builder import build_simulation_dataset_from_manifest
 from .core.base import (
     BaseSimulationConfig,
     ChatProviders,
