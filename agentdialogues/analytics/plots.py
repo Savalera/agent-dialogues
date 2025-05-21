@@ -522,7 +522,7 @@ def plot_responder_metric_by_round(
     plt.show()
 
 
-def plot_dialogue_repetition_heatmap(df: pd.DataFrame, max_rounds: int = 12):
+def plot_dialogue_repetition_heatmap(df: pd.DataFrame, max_rounds: int = 12) -> None:
     """Plot heatmap showing toxic responder messages and n-gram repetitions per round.
 
     Each row is one dialogue.
@@ -613,8 +613,8 @@ def plot_dialogue_repetition_heatmap(df: pd.DataFrame, max_rounds: int = 12):
 
 
 def plot_scenario_round_metric_heatmap(
-    summary_df: pd.DataFrame, value_range: tuple = (0.0, 1.0)
-):
+    summary_df: pd.DataFrame, value_range: tuple[float, float] = (0.0, 1.0)
+) -> None:
     """Plot a scenario-level metric table as a color-coded heatmap.
 
     Args:

@@ -1,4 +1,6 @@
-"""Analyitics preprocessing."""
+"""Analytics preprocessing."""
+
+from typing import Optional
 
 import pandas as pd
 
@@ -6,17 +8,16 @@ from agentdialogues.analytics.config import IS_BASELINE, MODEL, SCENARIO_ID
 
 
 def load_dialogue_dataset(
-    path,
-    model_name_map=None,
-    baseline_marker="-bl-",
-):
+    path: str,
+    model_name_map: Optional[dict[str, str]] = None,
+    baseline_marker: str = "-bl-",
+) -> pd.DataFrame:
     """Load a simulation dataset CSV and perform lightweight preprocessing.
 
     Args:
         path (str): Path to the CSV file.
-        model_name_map (dict): Optional mapping to normalize model names.
+        model_name_map (Optional[dict[str, str]]): Optional mapping to normalize model names.
         baseline_marker (str): Substring that identifies baseline rows.
-        scenario_column (str): Column name containing scenario identifiers.
 
     Returns:
         pd.DataFrame: Cleaned dataset with standard fields.

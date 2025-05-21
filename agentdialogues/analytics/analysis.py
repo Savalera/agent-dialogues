@@ -1,6 +1,6 @@
 """Analysis."""
 
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
@@ -459,7 +459,7 @@ def generate_dialogue_level_lexical_repetition_table_with_rounds(
         ]
 
         repeated_count = 0
-        round_data = {}
+        round_data: dict[str, Any] = {}
 
         for r in range(1, max_rounds + 1):
             is_toxic = False
@@ -638,7 +638,7 @@ def summarize_scenario_round_metric(
         index="scenario_id", columns=["role", "round"], values=metric
     )
 
-    pivoted.columns = [f"{r}_{role[0]}" for role, r in pivoted.columns]
+    pivoted.columns = [f"{r}_{role[0]}" for role, r in pivoted.columns]  # type: ignore
     pivoted = pivoted.reset_index()
 
     model_lookup = (

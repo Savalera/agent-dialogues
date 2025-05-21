@@ -54,6 +54,10 @@ explicit_package_bases = true
 module = "detoxify"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "sklearn.*"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 
