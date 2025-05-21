@@ -2,8 +2,12 @@
 
 import math
 
+import matplotlib.cm as cm
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+from matplotlib.colors import Normalize
 from matplotlib.lines import Line2D
 
 from agentdialogues.analytics.config import (
@@ -513,6 +517,159 @@ def plot_responder_metric_by_round(
     fig.legend(
         handles=legend_elements, loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.02)
     )
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_dialogue_repetition_heatmap(df: pd.DataFrame, max_rounds: int = 12):
+    """Plot heatmap showing toxic responder messages and n-gram repetitions per round.
+
+    Each row is one dialogue.
+    Each column is a round.
+    Coloring shows toxicity and repetition count tiers.
+    """
+    df = df.sort_values(["responder_model", "chat_id"]).reset_index(drop=True)
+    rounds = range(1, max_rounds + 1)
+    n_dialogues = len(df)
+
+    fig, ax = plt.subplots(figsize=(max_rounds * 0.55 + 2, n_dialogues * 0.4 + 1))
+
+    for y, (_, row) in enumerate(df.iterrows()):
+        for r in rounds:
+            is_toxic = row.get(f"round_{r}_is_toxic", False)
+            repeats = row.get(f"round_{r}_repeats", 0)
+
+            # Coloring logic
+            if is_toxic:
+                if repeats == 0:
+                    color = "#f8cccc"  # toxic, no repetition → pastel red
+                elif repeats > 100:
+                    color = "#FFC48C"  # toxic, high repetition
+                elif repeats > 10:
+                    color = "#FFD9B3"  # toxic, medium
+                else:
+                    color = "#FFF4B2"  # toxic, low
+            else:
+                color = "#f5f5f5"  # non-toxic gray
+
+            # Draw rectangle
+            ax.add_patch(
+                mpatches.Rectangle(
+                    (float(r - 1), float(y)),
+                    1.0,
+                    1.0,
+                    facecolor=color,
+                    edgecolor="white",
+                    linewidth=0.5,
+                )
+            )
+
+            # Add annotation if repeats > 0
+            annotation = str(repeats) if repeats > 0 else ""
+            ax.text(
+                r - 0.5,
+                y + 0.5,
+                annotation,
+                ha="center",
+                va="center",
+                fontsize=8,
+                color="black",
+            )
+
+    # Axes and ticks
+    ax.set_xlim(0, max_rounds)
+    ax.set_ylim(0, n_dialogues)
+    ax.set_xticks(range(max_rounds))
+    ax.set_xticklabels([str(r) for r in rounds], fontsize=8)
+    ax.set_yticks([i + 0.5 for i in range(n_dialogues)])
+    ax.set_yticklabels(
+        [f"{row['responder_model']} — {row['chat_id']}" for _, row in df.iterrows()],
+        fontsize=8,
+        va="center",
+    )
+    ax.invert_yaxis()
+    ax.set_xlabel("Round", fontsize=10)
+    ax.set_ylabel("Dialogue Index", fontsize=10)
+
+    # Legend
+    legend_elements = [
+        mpatches.Patch(facecolor="#f8cccc", label="Toxic (no repetition)"),
+        mpatches.Patch(facecolor="#FFF4B2", label="Toxic + 1–9 n-grams"),
+        mpatches.Patch(facecolor="#FFD9B3", label="Toxic + 10–99 n-grams"),
+        mpatches.Patch(facecolor="#FFC48C", label="Toxic + 100+ n-grams"),
+        mpatches.Patch(facecolor="#f5f5f5", label="Non-toxic (any repetition)"),
+    ]
+    ax.legend(
+        handles=legend_elements,
+        loc="lower right",
+        fontsize=8,
+        title="Legend",
+        title_fontsize=9,
+    )
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_scenario_round_metric_heatmap(
+    summary_df: pd.DataFrame, value_range: tuple = (0.0, 1.0)
+):
+    """Plot a scenario-level metric table as a color-coded heatmap.
+
+    Args:
+        summary_df (pd.DataFrame): Output from summarize_scenario_round_metric.
+        value_range (tuple): Min/max value for color normalization.
+    """
+    meta_cols = ["scenario_id", "initiator_model", "responder_model"]
+    metric_cols = [col for col in summary_df.columns if col not in meta_cols]
+    data = summary_df[metric_cols].copy()
+
+    vmin, vmax = value_range
+    norm = Normalize(vmin, vmax)
+    cmap = cm.get_cmap("RdYlGn_r")
+
+    fig, ax = plt.subplots(figsize=(len(metric_cols) * 0.5 + 4, len(data) * 0.4 + 1))
+
+    for y, (_, row) in enumerate(data.iterrows()):
+        for x, col in enumerate(metric_cols):
+            val = row[col]
+            if pd.isna(val):
+                color = "#ffffff"
+                label = ""
+            else:
+                color = cmap(norm(val))
+                label = f"{val:.2f}"
+
+            ax.add_patch(
+                mpatches.Rectangle(
+                    (x, y), 1.0, 1.0, facecolor=color, edgecolor="white", linewidth=0.5
+                )
+            )
+
+            if label:
+                ax.text(x + 0.5, y + 0.5, label, ha="center", va="center", fontsize=8)
+
+    ax.set_xlim(0, len(metric_cols))
+    ax.set_ylim(0, len(data))
+    ax.set_xticks(np.arange(len(metric_cols)) + 0.5)
+    ax.set_xticklabels(metric_cols, rotation=45, ha="right", fontsize=8)
+    ax.set_yticks(np.arange(len(data)) + 0.5)
+    ax.set_yticklabels(
+        [
+            f"{row['initiator_model']} → {row['responder_model']} ({row['scenario_id']})"
+            for _, row in summary_df.iterrows()
+        ],
+        fontsize=8,
+    )
+    ax.invert_yaxis()
+    ax.set_xlabel("Round", fontsize=10)
+    ax.set_ylabel("Scenario", fontsize=10)
+
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=ax, orientation="vertical", shrink=0.75)
+    cbar.set_label("Metric Value", fontsize=9)
 
     plt.tight_layout()
     plt.show()

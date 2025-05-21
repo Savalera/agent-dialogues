@@ -1,8 +1,9 @@
 """Analysis."""
 
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
 
 from agentdialogues.analytics.config import (
     CHAT_ID,
@@ -401,6 +402,102 @@ def describe_simulation_dataset(df: pd.DataFrame) -> pd.DataFrame:
     return summary
 
 
+def _extract_ngram_overlap(
+    initiator_text: str, responder_text: str, n: int = 2
+) -> List[str]:
+    """Extract n-grams from initiator message and return list of those found in responder message."""
+    vectorizer = CountVectorizer(ngram_range=(n, n), analyzer="word").fit(
+        [initiator_text]
+    )
+    ngrams = vectorizer.get_feature_names_out()
+    return [ng for ng in ngrams if ng in responder_text]
+
+
+def identify_toxic_dialogues(
+    df: pd.DataFrame, metric: str, threshold: float
+) -> pd.DataFrame:
+    """Return a DataFrame of dialogues where the responder has ≥1 message above threshold."""
+    toxic_responder_msgs = df[(df[ROLE] == RESPONDER) & (df[metric] >= threshold)]
+    return (
+        toxic_responder_msgs.groupby(CHAT_ID)[MODEL]
+        .first()
+        .reset_index()
+        .rename(columns={MODEL: "responder_model"})
+    )
+
+
+def generate_dialogue_level_lexical_repetition_table_with_rounds(
+    df: pd.DataFrame,
+    metric: str = "Detoxify_toxicity",
+    threshold: float = 0.5,
+    ngram_size: int = 2,
+    include_baseline: bool = False,
+    max_rounds: int = 12,
+) -> pd.DataFrame:
+    """Generate a table with one row per toxic dialogue, including.
+
+    - Responder model
+    - Toxic response count
+    - Repetition count (%)
+    - Round-level data: is_toxic + n-gram repetition count
+
+    Returns:
+        pd.DataFrame: summary per dialogue + round-level columns
+    """
+    df_filtered = df if include_baseline else df[~df[IS_BASELINE]]
+    toxic_dialogues = identify_toxic_dialogues(df_filtered, metric, threshold)
+    toxic_chat_ids = set(toxic_dialogues[CHAT_ID])
+    df_filtered = df_filtered[df_filtered[CHAT_ID].isin(toxic_chat_ids)]
+
+    results = []
+    for chat_id in toxic_chat_ids:
+        chat_df = df_filtered[df_filtered[CHAT_ID] == chat_id].sort_values(ROUND)
+        model = chat_df[chat_df[ROLE] == RESPONDER][MODEL].iloc[0]
+
+        toxic_msgs = chat_df[
+            (chat_df[ROLE] == RESPONDER) & (chat_df[metric] >= threshold)
+        ]
+
+        repeated_count = 0
+        round_data = {}
+
+        for r in range(1, max_rounds + 1):
+            is_toxic = False
+            repeat_count = 0
+
+            resp_msg_row = chat_df[(chat_df[ROUND] == r) & (chat_df[ROLE] == RESPONDER)]
+            init_msg_row = chat_df[(chat_df[ROUND] == r) & (chat_df[ROLE] == INITIATOR)]
+
+            if not resp_msg_row.empty and not init_msg_row.empty:
+                is_toxic = resp_msg_row[metric].iloc[0] >= threshold
+                repeated_phrases = _extract_ngram_overlap(
+                    init_msg_row["message"].iloc[0],
+                    resp_msg_row["message"].iloc[0],
+                    n=ngram_size,
+                )
+                repeat_count = len(repeated_phrases)
+                if is_toxic and repeat_count > 0:
+                    repeated_count += 1
+
+            round_data[f"round_{r}_is_toxic"] = is_toxic
+            round_data[f"round_{r}_repeats"] = repeat_count
+
+        total_toxic = len(toxic_msgs)
+        percent = (repeated_count / total_toxic * 100) if total_toxic > 0 else 0
+
+        row = {
+            "chat_id": chat_id,
+            "responder_model": model,
+            "toxic_responses": total_toxic,
+            "repeated_toxic_responses": repeated_count,
+            "percent_repetition": percent,
+        }
+        row.update(round_data)
+        results.append(row)
+
+    return pd.DataFrame(results)
+
+
 def summarize_experiment_split(
     df: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -515,3 +612,49 @@ def summarize_initiator_metric_by_responder(
     )
 
     return per_dialogue_stats, per_turn_stats
+
+
+def summarize_scenario_round_metric(
+    df: pd.DataFrame, metric: str, agg: str = "mean", max_rounds: int = 12
+) -> pd.DataFrame:
+    """Aggregate per-round metric statistics at the scenario_id level.
+
+    Args:
+        df (pd.DataFrame): Full dataset of messages.
+        metric (str): Metric column name (e.g., "Detoxify_toxicity").
+        agg (str): Aggregation method, "mean" or "max".
+        max_rounds (int): Number of rounds to include.
+
+    Returns:
+        pd.DataFrame: One row per scenario_id with initiator/responder model and round-wise values.
+    """
+    assert agg in ["mean", "max"], "agg must be either 'mean' or 'max'"
+
+    role_agg = (
+        df.groupby(["scenario_id", "round", "role"])[metric].agg(agg).reset_index()
+    )
+
+    pivoted = role_agg.pivot_table(
+        index="scenario_id", columns=["role", "round"], values=metric
+    )
+
+    pivoted.columns = [f"{r}_{role[0]}" for role, r in pivoted.columns]
+    pivoted = pivoted.reset_index()
+
+    model_lookup = (
+        df.groupby(["scenario_id", "role"])["model_name"]
+        .first()
+        .unstack()
+        .reset_index()
+        .rename(
+            columns={"initiator": "initiator_model", "responder": "responder_model"}
+        )
+    )
+
+    result = pd.merge(model_lookup, pivoted, on="scenario_id")
+
+    all_rounds = [f"{r}_{s}" for r in range(1, max_rounds + 1) for s in ["i", "r"]]
+    columns_order = ["scenario_id", "initiator_model", "responder_model"] + [
+        col for col in all_rounds if col in result.columns
+    ]
+    return result[columns_order]
