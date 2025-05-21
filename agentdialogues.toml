@@ -1,0 +1,10 @@
+[paths]
+logs_dir = "logs"
+datasets_dir = "datasets"
+notebooks_dir = "notebooks"
+simulations_dir = "simulations"
+scenarios_sub_dir = "scenarios"
+
+[defaults]
+aggregate_file_prefix = "aggregated"
+save_scenario_datasets = false

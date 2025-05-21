@@ -45,7 +45,7 @@ We use Agent Dialogues for simulated conversations to check language model and a
 - Sarcasm classifier.
 - Self-assessment mid-conversation.
 - Self-adoption during conversation.
-- Improved data analytics and reporting.
+- Improved data analytics and reporting with detailed documentation.
 
 ## Structure
 
@@ -360,7 +360,7 @@ This creates an aggregated_scores.csv file in the scenario’s log folder, conta
 
 The project also provides a `/notebooks` directory where you can store and run Jupyter notebooks.
 
-Support for analytics helper functions (e.g., DataFrames, plotting) is planned for future releases.
+Support for analytics helper functions (e.g., DataFrames, plotting) is implemented in the analytics module (currently in alpha).
 
 ## Citation
 

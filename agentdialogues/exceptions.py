@@ -35,3 +35,31 @@ class SimulationModuleError(SimulationError):
 
 class YAMLParsingError(SimulationError):
     """Raised when a YAML file cannot be parsed."""
+
+
+class DatasetError(Exception):
+    """Base class for dataset-related errors."""
+
+
+class DatasetDirectoryNotFoundError(DatasetError):
+    """Raised when dataset directory is not found."""
+
+    pass
+
+
+class NoLogFilesFoundError(DatasetError):
+    """Raised when no log files found."""
+
+    pass
+
+
+class LogProcessingError(DatasetError):
+    """Raised when log processing fails."""
+
+    pass
+
+
+class EmptyDatasetError(DatasetError):
+    """Raised when dataset has no data."""
+
+    pass
