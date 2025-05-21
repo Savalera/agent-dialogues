@@ -1,6 +1,5 @@
 """Analytics utils."""
 
-import pandas as pd
 from pandas import DataFrame, Series
 
 from agentdialogues.analytics.config import CHAT_ID, MODEL, RESPONDER, ROLE
