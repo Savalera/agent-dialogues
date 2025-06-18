@@ -1,6 +1,6 @@
 [project]
 name = "agentdialogues"
-version = "0.1.0-alpha.2"
+version = "0.1.0-beta.1"
 description = "Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research"
 authors = [
     { name = "Márk Tákacs", email = "mark.takacs@savalera.com" },
@@ -20,6 +20,7 @@ dependencies = [
     "pandas>=2.2.3",
     "python-dotenv>=1.0.1",
     "rich>=13.9.4",
+    "scikit-learn>=1.6.1",
 ]
 
 [dependency-groups]
@@ -51,6 +52,10 @@ explicit_package_bases = true
 
 [[tool.mypy.overrides]]
 module = "detoxify"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sklearn.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

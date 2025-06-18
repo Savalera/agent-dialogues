@@ -2,6 +2,7 @@
 
 from .agents.chat_agent import graph as chat_agent
 from .agents.detoxify_agent import graph as detoxify_agent
+from .analytics.dataset_builder import build_simulation_dataset_from_manifest
 from .core.base import (
     BaseSimulationConfig,
     ChatProviders,
@@ -15,7 +16,6 @@ from .core.base import (
 from .core.bootstrap import bootstrap_simulation
 from .core.utils import convert_dialogue_to_chat_messages
 from .exceptions import SimulationExecutionError
-from .utils import prepare_simulation_dataset
 
 __all__ = [
     "BaseSimulationConfig",
@@ -28,8 +28,8 @@ __all__ = [
     "Roles",
     "SimulationExecutionError",
     "bootstrap_simulation",
+    "build_simulation_dataset_from_manifest",
     "chat_agent",
     "convert_dialogue_to_chat_messages",
     "detoxify_agent",
-    "prepare_simulation_dataset",
 ]
