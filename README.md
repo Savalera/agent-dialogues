@@ -367,13 +367,13 @@ Support for analytics helper functions (e.g., DataFrames, plotting) is implement
 If you use this project, please cite it as below:
 
 ```bibtex
-@software{Takacs_Agent_Dialogues_Multi-Agent_2025,
-author = {Takács, Márk},
+@software{Savalera_Agent_Dialogues_Multi-Agent_2025,
+author = {Savalera},
 doi = {10.5281/zenodo.15082311},
 month = mar,
 title = {{Agent Dialogues: Multi-Agent Simulation Framework for AI Behavior Research}},
 url = {https://github.com/savalera/agent-dialogues},
-version = {0.1.0-alpha.2},
+version = {0.1.0-beta.1},
 year = {2025}
 }
 ```
